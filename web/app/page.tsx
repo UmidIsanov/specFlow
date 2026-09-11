@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import type { Project } from "@/lib/types";
 import { Card, PageHeader, Empty } from "@/components/ui";
 import CreateProjectForm from "@/components/CreateProjectForm";
+import DeleteProjectButton from "@/components/DeleteProjectButton";
 import { date } from "@/lib/format";
 
 export default async function Home() {
@@ -21,31 +22,34 @@ export default async function Home() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {projects.map((p) => (
-            <Link key={p.id} href={`/projects/${p.id}`}>
-              <Card className="h-full p-5 transition hover:border-brand-500">
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="font-semibold leading-snug">{p.name}</h2>
+            // карточка целиком — ссылка (растянутая), кнопка удаления поверх неё
+            <Card key={p.id} className="relative h-full p-5 transition hover:border-brand-500">
+              <Link href={`/projects/${p.id}`} className="absolute inset-0 rounded-xl" aria-label={p.name} />
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="font-semibold leading-snug">{p.name}</h2>
+                <div className="flex shrink-0 items-center gap-2">
                   <span className="whitespace-nowrap text-xs text-ink-400">{date(p.createdAt)}</span>
+                  <DeleteProjectButton projectId={p.id} name={p.name} />
                 </div>
-                <p className="mt-1 text-sm text-ink-400">
-                  {p.customer ?? "—"}
-                  {p.code ? ` · ${p.code}` : ""}
-                </p>
-                <dl className="mt-4 grid grid-cols-4 gap-2 text-center">
-                  {[
-                    ["Позиций", p._count?.specItems ?? 0],
-                    ["КП", p._count?.offers ?? 0],
-                    ["Поставок", p._count?.deliveries ?? 0],
-                    ["Актов", p._count?.acts ?? 0],
-                  ].map(([label, value]) => (
-                    <div key={String(label)} className="rounded-lg bg-ink-50 py-2">
-                      <dt className="text-[11px] text-ink-400">{label}</dt>
-                      <dd className="text-base font-semibold tabular">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </Card>
-            </Link>
+              </div>
+              <p className="mt-1 text-sm text-ink-400">
+                {p.customer ?? "—"}
+                {p.code ? ` · ${p.code}` : ""}
+              </p>
+              <dl className="mt-4 grid grid-cols-4 gap-2 text-center">
+                {[
+                  ["Позиций", p._count?.specItems ?? 0],
+                  ["КП", p._count?.offers ?? 0],
+                  ["Поставок", p._count?.deliveries ?? 0],
+                  ["Актов", p._count?.acts ?? 0],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-lg bg-ink-50 py-2">
+                    <dt className="text-[11px] text-ink-400">{label}</dt>
+                    <dd className="text-base font-semibold tabular">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </Card>
           ))}
         </div>
       )}

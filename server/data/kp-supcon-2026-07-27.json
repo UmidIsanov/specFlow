@@ -1,0 +1,2083 @@
+{
+ "supplier": "SUPCON TECHNOLOGY (KAZAKHSTAN) LLP",
+ "number": "Спецификация №1 к контракту MOF-SUPTEC-02 от 27.07.2026",
+ "currency": "USD",
+ "deliveryDays": 60,
+ "totalDeclared": 508770,
+ "note": "Страна происхождения — Китай. DAP Алмалык. Предоплата 50%, остаток 50% до отгрузки. Гарантия 12 мес. с отгрузки.",
+ "systems": [
+  {
+   "system": 1,
+   "di": 224,
+   "do": 80,
+   "ai": 80,
+   "controllers": 2,
+   "contrix": true
+  },
+  {
+   "system": 2,
+   "di": 320,
+   "do": 144,
+   "ai": 96,
+   "controllers": 2,
+   "contrix": true
+  },
+  {
+   "system": 3,
+   "di": 192,
+   "do": 112,
+   "ai": 136,
+   "controllers": 2,
+   "contrix": false
+  },
+  {
+   "system": 4,
+   "di": 0,
+   "do": 48,
+   "ai": 80,
+   "controllers": 2,
+   "contrix": false
+  },
+  {
+   "system": 5,
+   "di": 80,
+   "do": 64,
+   "ai": 24,
+   "controllers": 2,
+   "contrix": false
+  },
+  {
+   "system": 6,
+   "di": 0,
+   "do": 32,
+   "ai": 16,
+   "controllers": 2,
+   "contrix": false
+  },
+  {
+   "system": 7,
+   "di": 0,
+   "do": 272,
+   "ai": 88,
+   "controllers": 2,
+   "contrix": false
+  },
+  {
+   "system": 8,
+   "di": 208,
+   "do": 144,
+   "ai": 152,
+   "controllers": 2,
+   "contrix": false
+  }
+ ],
+ "items": [
+  {
+   "pos": 1,
+   "section": "Система 1 · Hardware",
+   "name": "Safety controller / Контроллер безопасности",
+   "article": "GCU5002F",
+   "qty": 2,
+   "price": 1103,
+   "unit": "шт"
+  },
+  {
+   "pos": 2,
+   "section": "Система 1 · Hardware",
+   "name": "Safety co-processor / Сопроцессор безопасности",
+   "article": "SCP5002F",
+   "qty": 2,
+   "price": 2941,
+   "unit": "шт"
+  },
+  {
+   "pos": 3,
+   "section": "Система 1 · Hardware",
+   "name": "Optical module / Оптический модуль",
+   "article": "OEO-M8-02-13-I(ZK)",
+   "qty": 4,
+   "price": 25,
+   "unit": "шт"
+  },
+  {
+   "pos": 4,
+   "section": "Система 1 · Hardware",
+   "name": "Single-mode fiber jumper cable 0.95m LC-LC / Патч-корд оптический",
+   "article": "single-mode fiber 0.95m",
+   "qty": 2,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 5,
+   "section": "Система 1 · Hardware",
+   "name": "AC/DC Power Module / Блок питания AC/DC 24V 20A",
+   "article": "PW733W",
+   "qty": 4,
+   "price": 294,
+   "unit": "шт"
+  },
+  {
+   "pos": 6,
+   "section": "Система 1 · Hardware",
+   "name": "Power diagnosis module / Модуль диагностики питания 480W",
+   "article": "PW704",
+   "qty": 4,
+   "price": 412,
+   "unit": "шт"
+  },
+  {
+   "pos": 7,
+   "section": "Система 1 · Hardware",
+   "name": "DC/DC Safety Power Module / Модуль безопасного питания 240W SIL3",
+   "article": "PW5010DCF",
+   "qty": 10,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 8,
+   "section": "Система 1 · Hardware",
+   "name": "Rack (14 slots) / Корзина 14 слотов",
+   "article": "CN5014F",
+   "qty": 5,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 9,
+   "section": "Система 1 · Hardware",
+   "name": "Extend the connection module / Модуль расширения связи",
+   "article": "IM5002RJF",
+   "qty": 10,
+   "price": 360,
+   "unit": "шт"
+  },
+  {
+   "pos": 10,
+   "section": "Система 1 · Hardware",
+   "name": "DI Module (16-channel) / Модуль дискретного ввода 16 каналов SIL3",
+   "article": "DI5016F",
+   "qty": 14,
+   "price": 625,
+   "unit": "шт"
+  },
+  {
+   "pos": 11,
+   "section": "Система 1 · Hardware",
+   "name": "Safety DI Terminal Block / Клеммный блок DI",
+   "article": "TU5016DIF",
+   "qty": 14,
+   "price": 37,
+   "unit": "шт"
+  },
+  {
+   "pos": 12,
+   "section": "Система 1 · Hardware",
+   "name": "DB37 Cable 2m / Кабель DB37",
+   "article": "LE37-G5Pro(F)-02",
+   "qty": 29,
+   "price": 35,
+   "unit": "шт"
+  },
+  {
+   "pos": 13,
+   "section": "Система 1 · Hardware",
+   "name": "DO Module (16-channel) / Модуль дискретного вывода 16 каналов SIL3",
+   "article": "DO5016F",
+   "qty": 5,
+   "price": 647,
+   "unit": "шт"
+  },
+  {
+   "pos": 14,
+   "section": "Система 1 · Hardware",
+   "name": "Safety DO Terminal Block / Клеммный блок DO",
+   "article": "TU5016DOF",
+   "qty": 5,
+   "price": 34,
+   "unit": "шт"
+  },
+  {
+   "pos": 15,
+   "section": "Система 1 · Hardware",
+   "name": "AI Module (8-channel) / Модуль аналогового ввода 8 каналов 4-20mA SIL3",
+   "article": "AI5008F-H",
+   "qty": 10,
+   "price": 735,
+   "unit": "шт"
+  },
+  {
+   "pos": 16,
+   "section": "Система 1 · Hardware",
+   "name": "Safety AI Current-type Terminal Block / Клеммный блок AI",
+   "article": "TU5008AIF",
+   "qty": 10,
+   "price": 38,
+   "unit": "шт"
+  },
+  {
+   "pos": 17,
+   "section": "Система 1 · Hardware",
+   "name": "G5pro empty module / Пустой модуль",
+   "article": "AM5000",
+   "qty": 6,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 18,
+   "section": "Система 1 · Hardware",
+   "name": "Weidmüller relay with LED and socket / Реле Weidmüller 2NO+2NC 24VDC",
+   "article": "DRM270024L + FS 2CO ECO",
+   "qty": 70,
+   "price": 5,
+   "unit": "шт"
+  },
+  {
+   "pos": 19,
+   "section": "Система 1 · Hardware",
+   "name": "Hart Multiplexer / Мультиплексор HART",
+   "article": "HUX-MUX",
+   "qty": 5,
+   "price": 460,
+   "unit": "шт"
+  },
+  {
+   "pos": 20,
+   "section": "Система 1 · Hardware",
+   "name": "Baseboard bus terminal / Шинный терминал базовой платы",
+   "article": "ME 22.5 TBUS",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 21,
+   "section": "Система 1 · Hardware",
+   "name": "Baseboard wiring terminals / Клеммы подключения базовой платы",
+   "article": "IMC 1.5-3.81, MC 1.5-3.81",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 22,
+   "section": "Система 1 · Software",
+   "name": "Contrix Plus(GCS)-S0F — ПО поддержки системы безопасности G5Pro",
+   "article": "Contrix Plus(GCS)-S0F",
+   "qty": 1,
+   "price": 1471,
+   "unit": "шт"
+  },
+  {
+   "pos": 23,
+   "section": "Система 1 · Software",
+   "name": "I-SCADA Configuration Management Software 1000 points / ПО управления конфигурацией",
+   "article": "I-SCADA-DEV(1000)",
+   "qty": 1,
+   "price": 794,
+   "unit": "шт"
+  },
+  {
+   "pos": 24,
+   "section": "Система 1 · Software",
+   "name": "Engineer Workstation / Инженерная рабочая станция Dell T3680, i5-14600K, 16G, 1TB SSD",
+   "article": "Dell T3680_16G_Single SSD",
+   "qty": 1,
+   "price": 1543,
+   "unit": "шт"
+  },
+  {
+   "pos": 25,
+   "section": "Система 1 · Software",
+   "name": "DELL Display 22\" 1920×1080 / Монитор DELL",
+   "article": "DELL 22\"LED",
+   "qty": 1,
+   "price": 171,
+   "unit": "шт"
+  },
+  {
+   "pos": 26,
+   "section": "Система 1 · Cabinet",
+   "name": "SUPCON switch (Barrier) II generation / Коммутатор SUPCON 14×RJ45 + 2 SFP",
+   "article": "SUP-5216",
+   "qty": 2,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 27,
+   "section": "Система 1 · Cabinet",
+   "name": "SFP Module single mode LC / SFP модуль",
+   "article": "SFP-20S",
+   "qty": 2,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 28,
+   "section": "Система 1 · Cabinet",
+   "name": "Fiber-Optic Splice Closure 6 ST / Волоконно-оптическая муфта",
+   "article": "SUP-A-06",
+   "qty": 1,
+   "price": 59,
+   "unit": "шт"
+  },
+  {
+   "pos": 29,
+   "section": "Система 1 · Cabinet",
+   "name": "System Cabinet 2100×800×800 RAL7035 / Системный шкаф",
+   "article": "CN011-A0",
+   "qty": 2,
+   "price": 2657,
+   "unit": "шт"
+  },
+  {
+   "pos": 30,
+   "section": "Система 2 · Hardware",
+   "name": "Safety controller / Контроллер безопасности",
+   "article": "GCU5002F",
+   "qty": 2,
+   "price": 1103,
+   "unit": "шт"
+  },
+  {
+   "pos": 31,
+   "section": "Система 2 · Hardware",
+   "name": "Safety co-processor / Сопроцессор безопасности",
+   "article": "SCP5002F",
+   "qty": 2,
+   "price": 2941,
+   "unit": "шт"
+  },
+  {
+   "pos": 32,
+   "section": "Система 2 · Hardware",
+   "name": "Optical module / Оптический модуль",
+   "article": "OEO-M8-02-13-I(ZK)",
+   "qty": 4,
+   "price": 25,
+   "unit": "шт"
+  },
+  {
+   "pos": 33,
+   "section": "Система 2 · Hardware",
+   "name": "Single-mode fiber jumper cable 0.95m LC-LC / Патч-корд оптический",
+   "article": "single-mode fiber 0.95m",
+   "qty": 2,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 34,
+   "section": "Система 2 · Hardware",
+   "name": "AC/DC Power Module / Блок питания AC/DC 24V 20A",
+   "article": "PW733W",
+   "qty": 4,
+   "price": 294,
+   "unit": "шт"
+  },
+  {
+   "pos": 35,
+   "section": "Система 2 · Hardware",
+   "name": "Power diagnosis module / Модуль диагностики питания 480W",
+   "article": "PW704",
+   "qty": 4,
+   "price": 412,
+   "unit": "шт"
+  },
+  {
+   "pos": 36,
+   "section": "Система 2 · Hardware",
+   "name": "DC/DC Safety Power Module / Модуль безопасного питания 240W SIL3",
+   "article": "PW5010DCF",
+   "qty": 12,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 37,
+   "section": "Система 2 · Hardware",
+   "name": "Rack (14 slots) / Корзина 14 слотов",
+   "article": "CN5014F",
+   "qty": 6,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 38,
+   "section": "Система 2 · Hardware",
+   "name": "Extend the connection module / Модуль расширения связи",
+   "article": "IM5002RJF",
+   "qty": 12,
+   "price": 360,
+   "unit": "шт"
+  },
+  {
+   "pos": 39,
+   "section": "Система 2 · Hardware",
+   "name": "DI Module (16-channel) / Модуль дискретного ввода 16 каналов SIL3",
+   "article": "DI5016F",
+   "qty": 20,
+   "price": 625,
+   "unit": "шт"
+  },
+  {
+   "pos": 40,
+   "section": "Система 2 · Hardware",
+   "name": "Safety DI Terminal Block / Клеммный блок DI",
+   "article": "TU5016DIF",
+   "qty": 20,
+   "price": 37,
+   "unit": "шт"
+  },
+  {
+   "pos": 41,
+   "section": "Система 2 · Hardware",
+   "name": "DB37 Cable 2m / Кабель DB37",
+   "article": "LE37-G5Pro(F)-02",
+   "qty": 41,
+   "price": 35,
+   "unit": "шт"
+  },
+  {
+   "pos": 42,
+   "section": "Система 2 · Hardware",
+   "name": "DO Module (16-channel) / Модуль дискретного вывода 16 каналов SIL3",
+   "article": "DO5016F",
+   "qty": 9,
+   "price": 647,
+   "unit": "шт"
+  },
+  {
+   "pos": 43,
+   "section": "Система 2 · Hardware",
+   "name": "Safety DO Terminal Block / Клеммный блок DO",
+   "article": "TU5016DOF",
+   "qty": 9,
+   "price": 34,
+   "unit": "шт"
+  },
+  {
+   "pos": 44,
+   "section": "Система 2 · Hardware",
+   "name": "AI Module (8-channel) / Модуль аналогового ввода 8 каналов 4-20mA SIL3",
+   "article": "AI5008F-H",
+   "qty": 12,
+   "price": 735,
+   "unit": "шт"
+  },
+  {
+   "pos": 45,
+   "section": "Система 2 · Hardware",
+   "name": "Safety AI Current-type Terminal Block / Клеммный блок AI",
+   "article": "TU5008AIF",
+   "qty": 12,
+   "price": 38,
+   "unit": "шт"
+  },
+  {
+   "pos": 46,
+   "section": "Система 2 · Hardware",
+   "name": "G5pro empty module / Пустой модуль",
+   "article": "AM5000",
+   "qty": 7,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 47,
+   "section": "Система 2 · Hardware",
+   "name": "Weidmüller relay with LED and socket / Реле Weidmüller 2NO+2NC 24VDC",
+   "article": "DRM270024L + FS 2CO ECO",
+   "qty": 143,
+   "price": 5,
+   "unit": "шт"
+  },
+  {
+   "pos": 48,
+   "section": "Система 2 · Hardware",
+   "name": "Hart Multiplexer / Мультиплексор HART",
+   "article": "HUX-MUX",
+   "qty": 6,
+   "price": 460,
+   "unit": "шт"
+  },
+  {
+   "pos": 49,
+   "section": "Система 2 · Hardware",
+   "name": "Baseboard bus terminal / Шинный терминал базовой платы",
+   "article": "ME 22.5 TBUS",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 50,
+   "section": "Система 2 · Hardware",
+   "name": "Baseboard wiring terminals / Клеммы подключения базовой платы",
+   "article": "IMC 1.5-3.81, MC 1.5-3.81",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 51,
+   "section": "Система 2 · Software",
+   "name": "Contrix Plus(GCS)-S0F — ПО поддержки системы безопасности G5Pro",
+   "article": "Contrix Plus(GCS)-S0F",
+   "qty": 1,
+   "price": 1471,
+   "unit": "шт"
+  },
+  {
+   "pos": 52,
+   "section": "Система 2 · Software",
+   "name": "I-SCADA Configuration Management Software 1000 points / ПО управления конфигурацией",
+   "article": "I-SCADA-DEV(1000)",
+   "qty": 1,
+   "price": 794,
+   "unit": "шт"
+  },
+  {
+   "pos": 53,
+   "section": "Система 2 · Software",
+   "name": "Engineer Workstation / Инженерная рабочая станция Dell T3680, i5-14600K, 16G, 1TB SSD",
+   "article": "Dell T3680_16G_Single SSD",
+   "qty": 1,
+   "price": 1543,
+   "unit": "шт"
+  },
+  {
+   "pos": 54,
+   "section": "Система 2 · Software",
+   "name": "DELL Display 22\" 1920×1080 / Монитор DELL",
+   "article": "DELL 22\"LED",
+   "qty": 1,
+   "price": 171,
+   "unit": "шт"
+  },
+  {
+   "pos": 55,
+   "section": "Система 2 · Cabinet",
+   "name": "SUPCON switch (Barrier) II generation / Коммутатор SUPCON 14×RJ45 + 2 SFP",
+   "article": "SUP-5216",
+   "qty": 2,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 56,
+   "section": "Система 2 · Cabinet",
+   "name": "SFP Module single mode LC / SFP модуль",
+   "article": "SFP-20S",
+   "qty": 2,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 57,
+   "section": "Система 2 · Cabinet",
+   "name": "Fiber-Optic Splice Closure 6 ST / Волоконно-оптическая муфта",
+   "article": "SUP-A-06",
+   "qty": 1,
+   "price": 59,
+   "unit": "шт"
+  },
+  {
+   "pos": 58,
+   "section": "Система 2 · Cabinet",
+   "name": "System Cabinet 2100×800×800 RAL7035 / Системный шкаф",
+   "article": "CN011-A0",
+   "qty": 2,
+   "price": 2657,
+   "unit": "шт"
+  },
+  {
+   "pos": 59,
+   "section": "Система 3 · Hardware",
+   "name": "Safety controller / Контроллер безопасности",
+   "article": "GCU5002F",
+   "qty": 2,
+   "price": 1103,
+   "unit": "шт"
+  },
+  {
+   "pos": 60,
+   "section": "Система 3 · Hardware",
+   "name": "Safety co-processor / Сопроцессор безопасности",
+   "article": "SCP5002F",
+   "qty": 2,
+   "price": 2941,
+   "unit": "шт"
+  },
+  {
+   "pos": 61,
+   "section": "Система 3 · Hardware",
+   "name": "Optical module / Оптический модуль",
+   "article": "OEO-M8-02-13-I(ZK)",
+   "qty": 4,
+   "price": 25,
+   "unit": "шт"
+  },
+  {
+   "pos": 62,
+   "section": "Система 3 · Hardware",
+   "name": "Single-mode fiber jumper cable 0.95m LC-LC / Патч-корд оптический",
+   "article": "single-mode fiber 0.95m",
+   "qty": 2,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 63,
+   "section": "Система 3 · Hardware",
+   "name": "AC/DC Power Module / Блок питания AC/DC 24V 20A",
+   "article": "PW733W",
+   "qty": 4,
+   "price": 294,
+   "unit": "шт"
+  },
+  {
+   "pos": 64,
+   "section": "Система 3 · Hardware",
+   "name": "Power diagnosis module / Модуль диагностики питания 480W",
+   "article": "PW704",
+   "qty": 4,
+   "price": 412,
+   "unit": "шт"
+  },
+  {
+   "pos": 65,
+   "section": "Система 3 · Hardware",
+   "name": "DC/DC Safety Power Module / Модуль безопасного питания 240W SIL3",
+   "article": "PW5010DCF",
+   "qty": 12,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 66,
+   "section": "Система 3 · Hardware",
+   "name": "Rack (14 slots) / Корзина 14 слотов",
+   "article": "CN5014F",
+   "qty": 6,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 67,
+   "section": "Система 3 · Hardware",
+   "name": "Extend the connection module / Модуль расширения связи",
+   "article": "IM5002RJF",
+   "qty": 12,
+   "price": 360,
+   "unit": "шт"
+  },
+  {
+   "pos": 68,
+   "section": "Система 3 · Hardware",
+   "name": "DI Module (16-channel) / Модуль дискретного ввода 16 каналов SIL3",
+   "article": "DI5016F",
+   "qty": 12,
+   "price": 625,
+   "unit": "шт"
+  },
+  {
+   "pos": 69,
+   "section": "Система 3 · Hardware",
+   "name": "Safety DI Terminal Block / Клеммный блок DI",
+   "article": "TU5016DIF",
+   "qty": 12,
+   "price": 37,
+   "unit": "шт"
+  },
+  {
+   "pos": 70,
+   "section": "Система 3 · Hardware",
+   "name": "DB37 Cable 2m / Кабель DB37",
+   "article": "LE37-G5Pro(F)-02",
+   "qty": 36,
+   "price": 35,
+   "unit": "шт"
+  },
+  {
+   "pos": 71,
+   "section": "Система 3 · Hardware",
+   "name": "DO Module (16-channel) / Модуль дискретного вывода 16 каналов SIL3",
+   "article": "DO5016F",
+   "qty": 7,
+   "price": 647,
+   "unit": "шт"
+  },
+  {
+   "pos": 72,
+   "section": "Система 3 · Hardware",
+   "name": "Safety DO Terminal Block / Клеммный блок DO",
+   "article": "TU5016DOF",
+   "qty": 7,
+   "price": 34,
+   "unit": "шт"
+  },
+  {
+   "pos": 73,
+   "section": "Система 3 · Hardware",
+   "name": "AI Module (8-channel) / Модуль аналогового ввода 8 каналов 4-20mA SIL3",
+   "article": "AI5008F-H",
+   "qty": 17,
+   "price": 735,
+   "unit": "шт"
+  },
+  {
+   "pos": 74,
+   "section": "Система 3 · Hardware",
+   "name": "Safety AI Current-type Terminal Block / Клеммный блок AI",
+   "article": "TU5008AIF",
+   "qty": 17,
+   "price": 38,
+   "unit": "шт"
+  },
+  {
+   "pos": 75,
+   "section": "Система 3 · Hardware",
+   "name": "G5pro empty module / Пустой модуль",
+   "article": "AM5000",
+   "qty": 8,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 76,
+   "section": "Система 3 · Hardware",
+   "name": "Weidmüller relay with LED and socket / Реле Weidmüller 2NO+2NC 24VDC",
+   "article": "DRM270024L + FS 2CO ECO",
+   "qty": 101,
+   "price": 5,
+   "unit": "шт"
+  },
+  {
+   "pos": 77,
+   "section": "Система 3 · Hardware",
+   "name": "Hart Multiplexer / Мультиплексор HART",
+   "article": "HUX-MUX",
+   "qty": 9,
+   "price": 460,
+   "unit": "шт"
+  },
+  {
+   "pos": 78,
+   "section": "Система 3 · Hardware",
+   "name": "Baseboard bus terminal / Шинный терминал базовой платы",
+   "article": "ME 22.5 TBUS",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 79,
+   "section": "Система 3 · Hardware",
+   "name": "Baseboard wiring terminals / Клеммы подключения базовой платы",
+   "article": "IMC 1.5-3.81, MC 1.5-3.81",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 80,
+   "section": "Система 3 · Software",
+   "name": "I-SCADA Configuration Management Software 1000 points / ПО управления конфигурацией",
+   "article": "I-SCADA-DEV(1000)",
+   "qty": 1,
+   "price": 794,
+   "unit": "шт"
+  },
+  {
+   "pos": 81,
+   "section": "Система 3 · Software",
+   "name": "Engineer Workstation / Инженерная рабочая станция Dell T3680, i5-14600K, 16G, 1TB SSD",
+   "article": "Dell T3680_16G_Single SSD",
+   "qty": 1,
+   "price": 1543,
+   "unit": "шт"
+  },
+  {
+   "pos": 82,
+   "section": "Система 3 · Software",
+   "name": "DELL Display 22\" 1920×1080 / Монитор DELL",
+   "article": "DELL 22\"LED",
+   "qty": 1,
+   "price": 171,
+   "unit": "шт"
+  },
+  {
+   "pos": 83,
+   "section": "Система 3 · Cabinet",
+   "name": "SUPCON switch (Barrier) II generation / Коммутатор SUPCON 14×RJ45 + 2 SFP",
+   "article": "SUP-5216",
+   "qty": 2,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 84,
+   "section": "Система 3 · Cabinet",
+   "name": "SFP Module single mode LC / SFP модуль",
+   "article": "SFP-20S",
+   "qty": 2,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 85,
+   "section": "Система 3 · Cabinet",
+   "name": "Fiber-Optic Splice Closure 6 ST / Волоконно-оптическая муфта",
+   "article": "SUP-A-06",
+   "qty": 1,
+   "price": 59,
+   "unit": "шт"
+  },
+  {
+   "pos": 86,
+   "section": "Система 3 · Cabinet",
+   "name": "System Cabinet 2100×800×800 RAL7035 / Системный шкаф",
+   "article": "CN011-A0",
+   "qty": 2,
+   "price": 2657,
+   "unit": "шт"
+  },
+  {
+   "pos": 87,
+   "section": "Система 4 · Hardware",
+   "name": "Safety controller / Контроллер безопасности",
+   "article": "GCU5002F",
+   "qty": 2,
+   "price": 1103,
+   "unit": "шт"
+  },
+  {
+   "pos": 88,
+   "section": "Система 4 · Hardware",
+   "name": "Safety co-processor / Сопроцессор безопасности",
+   "article": "SCP5002F",
+   "qty": 2,
+   "price": 2941,
+   "unit": "шт"
+  },
+  {
+   "pos": 89,
+   "section": "Система 4 · Hardware",
+   "name": "Optical module / Оптический модуль",
+   "article": "OEO-M8-02-13-I(ZK)",
+   "qty": 4,
+   "price": 25,
+   "unit": "шт"
+  },
+  {
+   "pos": 90,
+   "section": "Система 4 · Hardware",
+   "name": "Single-mode fiber jumper cable 0.95m LC-LC / Патч-корд оптический",
+   "article": "single-mode fiber 0.95m",
+   "qty": 2,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 91,
+   "section": "Система 4 · Hardware",
+   "name": "AC/DC Power Module / Блок питания AC/DC 24V 20A",
+   "article": "PW733W",
+   "qty": 4,
+   "price": 294,
+   "unit": "шт"
+  },
+  {
+   "pos": 92,
+   "section": "Система 4 · Hardware",
+   "name": "Power diagnosis module / Модуль диагностики питания 480W",
+   "article": "PW704",
+   "qty": 4,
+   "price": 412,
+   "unit": "шт"
+  },
+  {
+   "pos": 93,
+   "section": "Система 4 · Hardware",
+   "name": "DC/DC Safety Power Module / Модуль безопасного питания 240W SIL3",
+   "article": "PW5010DCF",
+   "qty": 8,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 94,
+   "section": "Система 4 · Hardware",
+   "name": "Rack (14 slots) / Корзина 14 слотов",
+   "article": "CN5014F",
+   "qty": 4,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 95,
+   "section": "Система 4 · Hardware",
+   "name": "Extend the connection module / Модуль расширения связи",
+   "article": "IM5002RJF",
+   "qty": 8,
+   "price": 360,
+   "unit": "шт"
+  },
+  {
+   "pos": 96,
+   "section": "Система 4 · Hardware",
+   "name": "DB37 Cable 2m / Кабель DB37",
+   "article": "LE37-G5Pro(F)-02",
+   "qty": 13,
+   "price": 35,
+   "unit": "шт"
+  },
+  {
+   "pos": 97,
+   "section": "Система 4 · Hardware",
+   "name": "DO Module (16-channel) / Модуль дискретного вывода 16 каналов SIL3",
+   "article": "DO5016F",
+   "qty": 3,
+   "price": 647,
+   "unit": "шт"
+  },
+  {
+   "pos": 98,
+   "section": "Система 4 · Hardware",
+   "name": "Safety DO Terminal Block / Клеммный блок DO",
+   "article": "TU5016DOF",
+   "qty": 3,
+   "price": 34,
+   "unit": "шт"
+  },
+  {
+   "pos": 99,
+   "section": "Система 4 · Hardware",
+   "name": "AI Module (8-channel) / Модуль аналогового ввода 8 каналов 4-20mA SIL3",
+   "article": "AI5008F-H",
+   "qty": 10,
+   "price": 735,
+   "unit": "шт"
+  },
+  {
+   "pos": 100,
+   "section": "Система 4 · Hardware",
+   "name": "Safety AI Current-type Terminal Block / Клеммный блок AI",
+   "article": "TU5008AIF",
+   "qty": 10,
+   "price": 38,
+   "unit": "шт"
+  },
+  {
+   "pos": 101,
+   "section": "Система 4 · Hardware",
+   "name": "G5pro empty module / Пустой модуль",
+   "article": "AM5000",
+   "qty": 7,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 102,
+   "section": "Система 4 · Hardware",
+   "name": "Weidmüller relay with LED and socket / Реле Weidmüller 2NO+2NC 24VDC",
+   "article": "DRM270024L + FS 2CO ECO",
+   "qty": 39,
+   "price": 5,
+   "unit": "шт"
+  },
+  {
+   "pos": 103,
+   "section": "Система 4 · Hardware",
+   "name": "Hart Multiplexer / Мультиплексор HART",
+   "article": "HUX-MUX",
+   "qty": 5,
+   "price": 460,
+   "unit": "шт"
+  },
+  {
+   "pos": 104,
+   "section": "Система 4 · Hardware",
+   "name": "Baseboard bus terminal / Шинный терминал базовой платы",
+   "article": "ME 22.5 TBUS",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 105,
+   "section": "Система 4 · Hardware",
+   "name": "Baseboard wiring terminals / Клеммы подключения базовой платы",
+   "article": "IMC 1.5-3.81, MC 1.5-3.81",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 106,
+   "section": "Система 4 · Software",
+   "name": "I-SCADA Configuration Management Software 1000 points / ПО управления конфигурацией",
+   "article": "I-SCADA-DEV(1000)",
+   "qty": 1,
+   "price": 794,
+   "unit": "шт"
+  },
+  {
+   "pos": 107,
+   "section": "Система 4 · Software",
+   "name": "Engineer Workstation / Инженерная рабочая станция Dell T3680, i5-14600K, 16G, 1TB SSD",
+   "article": "Dell T3680_16G_Single SSD",
+   "qty": 1,
+   "price": 1543,
+   "unit": "шт"
+  },
+  {
+   "pos": 108,
+   "section": "Система 4 · Software",
+   "name": "DELL Display 22\" 1920×1080 / Монитор DELL",
+   "article": "DELL 22\"LED",
+   "qty": 1,
+   "price": 171,
+   "unit": "шт"
+  },
+  {
+   "pos": 109,
+   "section": "Система 4 · Cabinet",
+   "name": "SUPCON switch (Barrier) II generation / Коммутатор SUPCON 14×RJ45 + 2 SFP",
+   "article": "SUP-5216",
+   "qty": 2,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 110,
+   "section": "Система 4 · Cabinet",
+   "name": "SFP Module single mode LC / SFP модуль",
+   "article": "SFP-20S",
+   "qty": 2,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 111,
+   "section": "Система 4 · Cabinet",
+   "name": "Fiber-Optic Splice Closure 6 ST / Волоконно-оптическая муфта",
+   "article": "SUP-A-06",
+   "qty": 1,
+   "price": 59,
+   "unit": "шт"
+  },
+  {
+   "pos": 112,
+   "section": "Система 4 · Cabinet",
+   "name": "System Cabinet 2100×800×800 RAL7035 / Системный шкаф",
+   "article": "CN011-A0",
+   "qty": 2,
+   "price": 2657,
+   "unit": "шт"
+  },
+  {
+   "pos": 113,
+   "section": "Система 5 · Hardware",
+   "name": "Safety controller / Контроллер безопасности",
+   "article": "GCU5002F",
+   "qty": 2,
+   "price": 1103,
+   "unit": "шт"
+  },
+  {
+   "pos": 114,
+   "section": "Система 5 · Hardware",
+   "name": "Safety co-processor / Сопроцессор безопасности",
+   "article": "SCP5002F",
+   "qty": 2,
+   "price": 2941,
+   "unit": "шт"
+  },
+  {
+   "pos": 115,
+   "section": "Система 5 · Hardware",
+   "name": "Optical module / Оптический модуль",
+   "article": "OEO-M8-02-13-I(ZK)",
+   "qty": 4,
+   "price": 25,
+   "unit": "шт"
+  },
+  {
+   "pos": 116,
+   "section": "Система 5 · Hardware",
+   "name": "Single-mode fiber jumper cable 0.95m LC-LC / Патч-корд оптический",
+   "article": "single-mode fiber 0.95m",
+   "qty": 2,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 117,
+   "section": "Система 5 · Hardware",
+   "name": "AC/DC Power Module / Блок питания AC/DC 24V 20A",
+   "article": "PW733W",
+   "qty": 4,
+   "price": 294,
+   "unit": "шт"
+  },
+  {
+   "pos": 118,
+   "section": "Система 5 · Hardware",
+   "name": "Power diagnosis module / Модуль диагностики питания 480W",
+   "article": "PW704",
+   "qty": 4,
+   "price": 412,
+   "unit": "шт"
+  },
+  {
+   "pos": 119,
+   "section": "Система 5 · Hardware",
+   "name": "DC/DC Safety Power Module / Модуль безопасного питания 240W SIL3",
+   "article": "PW5010DCF",
+   "qty": 8,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 120,
+   "section": "Система 5 · Hardware",
+   "name": "Rack (14 slots) / Корзина 14 слотов",
+   "article": "CN5014F",
+   "qty": 4,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 121,
+   "section": "Система 5 · Hardware",
+   "name": "Extend the connection module / Модуль расширения связи",
+   "article": "IM5002RJF",
+   "qty": 8,
+   "price": 360,
+   "unit": "шт"
+  },
+  {
+   "pos": 122,
+   "section": "Система 5 · Hardware",
+   "name": "DI Module (16-channel) / Модуль дискретного ввода 16 каналов SIL3",
+   "article": "DI5016F",
+   "qty": 5,
+   "price": 625,
+   "unit": "шт"
+  },
+  {
+   "pos": 123,
+   "section": "Система 5 · Hardware",
+   "name": "Safety DI Terminal Block / Клеммный блок DI",
+   "article": "TU5016DIF",
+   "qty": 5,
+   "price": 37,
+   "unit": "шт"
+  },
+  {
+   "pos": 124,
+   "section": "Система 5 · Hardware",
+   "name": "DB37 Cable 2m / Кабель DB37",
+   "article": "LE37-G5Pro(F)-02",
+   "qty": 12,
+   "price": 35,
+   "unit": "шт"
+  },
+  {
+   "pos": 125,
+   "section": "Система 5 · Hardware",
+   "name": "DO Module (16-channel) / Модуль дискретного вывода 16 каналов SIL3",
+   "article": "DO5016F",
+   "qty": 4,
+   "price": 647,
+   "unit": "шт"
+  },
+  {
+   "pos": 126,
+   "section": "Система 5 · Hardware",
+   "name": "Safety DO Terminal Block / Клеммный блок DO",
+   "article": "TU5016DOF",
+   "qty": 4,
+   "price": 34,
+   "unit": "шт"
+  },
+  {
+   "pos": 127,
+   "section": "Система 5 · Hardware",
+   "name": "AI Module (8-channel) / Модуль аналогового ввода 8 каналов 4-20mA SIL3",
+   "article": "AI5008F-H",
+   "qty": 3,
+   "price": 735,
+   "unit": "шт"
+  },
+  {
+   "pos": 128,
+   "section": "Система 5 · Hardware",
+   "name": "Safety AI Current-type Terminal Block / Клеммный блок AI",
+   "article": "TU5008AIF",
+   "qty": 3,
+   "price": 38,
+   "unit": "шт"
+  },
+  {
+   "pos": 129,
+   "section": "Система 5 · Hardware",
+   "name": "G5pro empty module / Пустой модуль",
+   "article": "AM5000",
+   "qty": 10,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 130,
+   "section": "Система 5 · Hardware",
+   "name": "Weidmüller relay with LED and socket / Реле Weidmüller 2NO+2NC 24VDC",
+   "article": "DRM270024L + FS 2CO ECO",
+   "qty": 50,
+   "price": 5,
+   "unit": "шт"
+  },
+  {
+   "pos": 131,
+   "section": "Система 5 · Hardware",
+   "name": "Hart Multiplexer / Мультиплексор HART",
+   "article": "HUX-MUX",
+   "qty": 2,
+   "price": 460,
+   "unit": "шт"
+  },
+  {
+   "pos": 132,
+   "section": "Система 5 · Hardware",
+   "name": "Baseboard bus terminal / Шинный терминал базовой платы",
+   "article": "ME 22.5 TBUS",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 133,
+   "section": "Система 5 · Hardware",
+   "name": "Baseboard wiring terminals / Клеммы подключения базовой платы",
+   "article": "IMC 1.5-3.81, MC 1.5-3.81",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 134,
+   "section": "Система 5 · Software",
+   "name": "I-SCADA Configuration Management Software 1000 points / ПО управления конфигурацией",
+   "article": "I-SCADA-DEV(1000)",
+   "qty": 1,
+   "price": 794,
+   "unit": "шт"
+  },
+  {
+   "pos": 135,
+   "section": "Система 5 · Software",
+   "name": "Engineer Workstation / Инженерная рабочая станция Dell T3680, i5-14600K, 16G, 1TB SSD",
+   "article": "Dell T3680_16G_Single SSD",
+   "qty": 1,
+   "price": 1543,
+   "unit": "шт"
+  },
+  {
+   "pos": 136,
+   "section": "Система 5 · Software",
+   "name": "DELL Display 22\" 1920×1080 / Монитор DELL",
+   "article": "DELL 22\"LED",
+   "qty": 1,
+   "price": 171,
+   "unit": "шт"
+  },
+  {
+   "pos": 137,
+   "section": "Система 5 · Cabinet",
+   "name": "SUPCON switch (Barrier) II generation / Коммутатор SUPCON 14×RJ45 + 2 SFP",
+   "article": "SUP-5216",
+   "qty": 2,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 138,
+   "section": "Система 5 · Cabinet",
+   "name": "SFP Module single mode LC / SFP модуль",
+   "article": "SFP-20S",
+   "qty": 2,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 139,
+   "section": "Система 5 · Cabinet",
+   "name": "Fiber-Optic Splice Closure 6 ST / Волоконно-оптическая муфта",
+   "article": "SUP-A-06",
+   "qty": 1,
+   "price": 59,
+   "unit": "шт"
+  },
+  {
+   "pos": 140,
+   "section": "Система 5 · Cabinet",
+   "name": "System Cabinet 2100×800×800 RAL7035 / Системный шкаф",
+   "article": "CN011-A0",
+   "qty": 2,
+   "price": 2657,
+   "unit": "шт"
+  },
+  {
+   "pos": 141,
+   "section": "Система 6 · Hardware",
+   "name": "Safety controller / Контроллер безопасности",
+   "article": "GCU5002F",
+   "qty": 2,
+   "price": 1103,
+   "unit": "шт"
+  },
+  {
+   "pos": 142,
+   "section": "Система 6 · Hardware",
+   "name": "Safety co-processor / Сопроцессор безопасности",
+   "article": "SCP5002F",
+   "qty": 2,
+   "price": 2941,
+   "unit": "шт"
+  },
+  {
+   "pos": 143,
+   "section": "Система 6 · Hardware",
+   "name": "Optical module / Оптический модуль",
+   "article": "OEO-M8-02-13-I(ZK)",
+   "qty": 4,
+   "price": 25,
+   "unit": "шт"
+  },
+  {
+   "pos": 144,
+   "section": "Система 6 · Hardware",
+   "name": "Single-mode fiber jumper cable 0.95m LC-LC / Патч-корд оптический",
+   "article": "single-mode fiber 0.95m",
+   "qty": 2,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 145,
+   "section": "Система 6 · Hardware",
+   "name": "AC/DC Power Module / Блок питания AC/DC 24V 20A",
+   "article": "PW733W",
+   "qty": 4,
+   "price": 294,
+   "unit": "шт"
+  },
+  {
+   "pos": 146,
+   "section": "Система 6 · Hardware",
+   "name": "Power diagnosis module / Модуль диагностики питания 480W",
+   "article": "PW704",
+   "qty": 4,
+   "price": 412,
+   "unit": "шт"
+  },
+  {
+   "pos": 147,
+   "section": "Система 6 · Hardware",
+   "name": "DC/DC Safety Power Module / Модуль безопасного питания 240W SIL3",
+   "article": "PW5010DCF",
+   "qty": 6,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 148,
+   "section": "Система 6 · Hardware",
+   "name": "Rack (14 slots) / Корзина 14 слотов",
+   "article": "CN5014F",
+   "qty": 3,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 149,
+   "section": "Система 6 · Hardware",
+   "name": "Extend the connection module / Модуль расширения связи",
+   "article": "IM5002RJF",
+   "qty": 6,
+   "price": 360,
+   "unit": "шт"
+  },
+  {
+   "pos": 150,
+   "section": "Система 6 · Hardware",
+   "name": "DB37 Cable 2m / Кабель DB37",
+   "article": "LE37-G5Pro(F)-02",
+   "qty": 4,
+   "price": 35,
+   "unit": "шт"
+  },
+  {
+   "pos": 151,
+   "section": "Система 6 · Hardware",
+   "name": "DO Module (16-channel) / Модуль дискретного вывода 16 каналов SIL3",
+   "article": "DO5016F",
+   "qty": 2,
+   "price": 647,
+   "unit": "шт"
+  },
+  {
+   "pos": 152,
+   "section": "Система 6 · Hardware",
+   "name": "Safety DO Terminal Block / Клеммный блок DO",
+   "article": "TU5016DOF",
+   "qty": 2,
+   "price": 34,
+   "unit": "шт"
+  },
+  {
+   "pos": 153,
+   "section": "Система 6 · Hardware",
+   "name": "AI Module (8-channel) / Модуль аналогового ввода 8 каналов 4-20mA SIL3",
+   "article": "AI5008F-H",
+   "qty": 2,
+   "price": 735,
+   "unit": "шт"
+  },
+  {
+   "pos": 154,
+   "section": "Система 6 · Hardware",
+   "name": "Safety AI Current-type Terminal Block / Клеммный блок AI",
+   "article": "TU5008AIF",
+   "qty": 2,
+   "price": 38,
+   "unit": "шт"
+  },
+  {
+   "pos": 155,
+   "section": "Система 6 · Hardware",
+   "name": "G5pro empty module / Пустой модуль",
+   "article": "AM5000",
+   "qty": 4,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 156,
+   "section": "Система 6 · Hardware",
+   "name": "Weidmüller relay with LED and socket / Реле Weidmüller 2NO+2NC 24VDC",
+   "article": "DRM270024L + FS 2CO ECO",
+   "qty": 21,
+   "price": 5,
+   "unit": "шт"
+  },
+  {
+   "pos": 157,
+   "section": "Система 6 · Hardware",
+   "name": "Hart Multiplexer / Мультиплексор HART",
+   "article": "HUX-MUX",
+   "qty": 6,
+   "price": 460,
+   "unit": "шт"
+  },
+  {
+   "pos": 158,
+   "section": "Система 6 · Hardware",
+   "name": "Baseboard bus terminal / Шинный терминал базовой платы",
+   "article": "ME 22.5 TBUS",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 159,
+   "section": "Система 6 · Hardware",
+   "name": "Baseboard wiring terminals / Клеммы подключения базовой платы",
+   "article": "IMC 1.5-3.81, MC 1.5-3.81",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 160,
+   "section": "Система 6 · Software",
+   "name": "I-SCADA Configuration Management Software 1000 points / ПО управления конфигурацией",
+   "article": "I-SCADA-DEV(1000)",
+   "qty": 1,
+   "price": 794,
+   "unit": "шт"
+  },
+  {
+   "pos": 161,
+   "section": "Система 6 · Software",
+   "name": "Engineer Workstation / Инженерная рабочая станция Dell T3680, i5-14600K, 16G, 1TB SSD",
+   "article": "Dell T3680_16G_Single SSD",
+   "qty": 1,
+   "price": 1543,
+   "unit": "шт"
+  },
+  {
+   "pos": 162,
+   "section": "Система 6 · Software",
+   "name": "DELL Display 22\" 1920×1080 / Монитор DELL",
+   "article": "DELL 22\"LED",
+   "qty": 1,
+   "price": 171,
+   "unit": "шт"
+  },
+  {
+   "pos": 163,
+   "section": "Система 6 · Cabinet",
+   "name": "SUPCON switch (Barrier) II generation / Коммутатор SUPCON 14×RJ45 + 2 SFP",
+   "article": "SUP-5216",
+   "qty": 2,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 164,
+   "section": "Система 6 · Cabinet",
+   "name": "SFP Module single mode LC / SFP модуль",
+   "article": "SFP-20S",
+   "qty": 2,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 165,
+   "section": "Система 6 · Cabinet",
+   "name": "Fiber-Optic Splice Closure 6 ST / Волоконно-оптическая муфта",
+   "article": "SUP-A-06",
+   "qty": 1,
+   "price": 59,
+   "unit": "шт"
+  },
+  {
+   "pos": 166,
+   "section": "Система 6 · Cabinet",
+   "name": "System Cabinet 2100×800×800 RAL7035 / Системный шкаф",
+   "article": "CN011-A0",
+   "qty": 2,
+   "price": 2657,
+   "unit": "шт"
+  },
+  {
+   "pos": 167,
+   "section": "Система 7 · Hardware",
+   "name": "Safety controller / Контроллер безопасности",
+   "article": "GCU5002F",
+   "qty": 2,
+   "price": 1103,
+   "unit": "шт"
+  },
+  {
+   "pos": 168,
+   "section": "Система 7 · Hardware",
+   "name": "Safety co-processor / Сопроцессор безопасности",
+   "article": "SCP5002F",
+   "qty": 2,
+   "price": 2941,
+   "unit": "шт"
+  },
+  {
+   "pos": 169,
+   "section": "Система 7 · Hardware",
+   "name": "Optical module / Оптический модуль",
+   "article": "OEO-M8-02-13-I(ZK)",
+   "qty": 4,
+   "price": 25,
+   "unit": "шт"
+  },
+  {
+   "pos": 170,
+   "section": "Система 7 · Hardware",
+   "name": "Single-mode fiber jumper cable 0.95m LC-LC / Патч-корд оптический",
+   "article": "single-mode fiber 0.95m",
+   "qty": 2,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 171,
+   "section": "Система 7 · Hardware",
+   "name": "AC/DC Power Module / Блок питания AC/DC 24V 20A",
+   "article": "PW733W",
+   "qty": 4,
+   "price": 294,
+   "unit": "шт"
+  },
+  {
+   "pos": 172,
+   "section": "Система 7 · Hardware",
+   "name": "Power diagnosis module / Модуль диагностики питания 480W",
+   "article": "PW704",
+   "qty": 4,
+   "price": 412,
+   "unit": "шт"
+  },
+  {
+   "pos": 173,
+   "section": "Система 7 · Hardware",
+   "name": "DC/DC Safety Power Module / Модуль безопасного питания 240W SIL3",
+   "article": "PW5010DCF",
+   "qty": 10,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 174,
+   "section": "Система 7 · Hardware",
+   "name": "Rack (14 slots) / Корзина 14 слотов",
+   "article": "CN5014F",
+   "qty": 5,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 175,
+   "section": "Система 7 · Hardware",
+   "name": "Extend the connection module / Модуль расширения связи",
+   "article": "IM5002RJF",
+   "qty": 10,
+   "price": 360,
+   "unit": "шт"
+  },
+  {
+   "pos": 176,
+   "section": "Система 7 · Hardware",
+   "name": "DB37 Cable 2m / Кабель DB37",
+   "article": "LE37-G5Pro(F)-02",
+   "qty": 28,
+   "price": 35,
+   "unit": "шт"
+  },
+  {
+   "pos": 177,
+   "section": "Система 7 · Hardware",
+   "name": "DO Module (16-channel) / Модуль дискретного вывода 16 каналов SIL3",
+   "article": "DO5016F",
+   "qty": 17,
+   "price": 647,
+   "unit": "шт"
+  },
+  {
+   "pos": 178,
+   "section": "Система 7 · Hardware",
+   "name": "Safety DO Terminal Block / Клеммный блок DO",
+   "article": "TU5016DOF",
+   "qty": 17,
+   "price": 34,
+   "unit": "шт"
+  },
+  {
+   "pos": 179,
+   "section": "Система 7 · Hardware",
+   "name": "AI Module (8-channel) / Модуль аналогового ввода 8 каналов 4-20mA SIL3",
+   "article": "AI5008F-H",
+   "qty": 11,
+   "price": 735,
+   "unit": "шт"
+  },
+  {
+   "pos": 180,
+   "section": "Система 7 · Hardware",
+   "name": "Safety AI Current-type Terminal Block / Клеммный блок AI",
+   "article": "TU5008AIF",
+   "qty": 11,
+   "price": 38,
+   "unit": "шт"
+  },
+  {
+   "pos": 181,
+   "section": "Система 7 · Hardware",
+   "name": "G5pro empty module / Пустой модуль",
+   "article": "AM5000",
+   "qty": 10,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 182,
+   "section": "Система 7 · Hardware",
+   "name": "Weidmüller relay with LED and socket / Реле Weidmüller 2NO+2NC 24VDC",
+   "article": "DRM270024L + FS 2CO ECO",
+   "qty": 263,
+   "price": 5,
+   "unit": "шт"
+  },
+  {
+   "pos": 183,
+   "section": "Система 7 · Hardware",
+   "name": "Hart Multiplexer / Мультиплексор HART",
+   "article": "HUX-MUX",
+   "qty": 7,
+   "price": 460,
+   "unit": "шт"
+  },
+  {
+   "pos": 184,
+   "section": "Система 7 · Hardware",
+   "name": "Baseboard bus terminal / Шинный терминал базовой платы",
+   "article": "ME 22.5 TBUS",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 185,
+   "section": "Система 7 · Hardware",
+   "name": "Baseboard wiring terminals / Клеммы подключения базовой платы",
+   "article": "IMC 1.5-3.81, MC 1.5-3.81",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 186,
+   "section": "Система 7 · Software",
+   "name": "I-SCADA Configuration Management Software 1000 points / ПО управления конфигурацией",
+   "article": "I-SCADA-DEV(1000)",
+   "qty": 1,
+   "price": 794,
+   "unit": "шт"
+  },
+  {
+   "pos": 187,
+   "section": "Система 7 · Software",
+   "name": "Engineer Workstation / Инженерная рабочая станция Dell T3680, i5-14600K, 16G, 1TB SSD",
+   "article": "Dell T3680_16G_Single SSD",
+   "qty": 1,
+   "price": 1543,
+   "unit": "шт"
+  },
+  {
+   "pos": 188,
+   "section": "Система 7 · Software",
+   "name": "DELL Display 22\" 1920×1080 / Монитор DELL",
+   "article": "DELL 22\"LED",
+   "qty": 1,
+   "price": 171,
+   "unit": "шт"
+  },
+  {
+   "pos": 189,
+   "section": "Система 7 · Cabinet",
+   "name": "SUPCON switch (Barrier) II generation / Коммутатор SUPCON 14×RJ45 + 2 SFP",
+   "article": "SUP-5216",
+   "qty": 2,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 190,
+   "section": "Система 7 · Cabinet",
+   "name": "SFP Module single mode LC / SFP модуль",
+   "article": "SFP-20S",
+   "qty": 2,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 191,
+   "section": "Система 7 · Cabinet",
+   "name": "Fiber-Optic Splice Closure 6 ST / Волоконно-оптическая муфта",
+   "article": "SUP-A-06",
+   "qty": 1,
+   "price": 59,
+   "unit": "шт"
+  },
+  {
+   "pos": 192,
+   "section": "Система 7 · Cabinet",
+   "name": "System Cabinet 2100×800×800 RAL7035 / Системный шкаф",
+   "article": "CN011-A0",
+   "qty": 2,
+   "price": 2657,
+   "unit": "шт"
+  },
+  {
+   "pos": 193,
+   "section": "Система 8 · Hardware",
+   "name": "Safety controller / Контроллер безопасности",
+   "article": "GCU5002F",
+   "qty": 2,
+   "price": 1103,
+   "unit": "шт"
+  },
+  {
+   "pos": 194,
+   "section": "Система 8 · Hardware",
+   "name": "Safety co-processor / Сопроцессор безопасности",
+   "article": "SCP5002F",
+   "qty": 2,
+   "price": 2941,
+   "unit": "шт"
+  },
+  {
+   "pos": 195,
+   "section": "Система 8 · Hardware",
+   "name": "Optical module / Оптический модуль",
+   "article": "OEO-M8-02-13-I(ZK)",
+   "qty": 4,
+   "price": 25,
+   "unit": "шт"
+  },
+  {
+   "pos": 196,
+   "section": "Система 8 · Hardware",
+   "name": "Single-mode fiber jumper cable 0.95m LC-LC / Патч-корд оптический",
+   "article": "single-mode fiber 0.95m",
+   "qty": 2,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 197,
+   "section": "Система 8 · Hardware",
+   "name": "AC/DC Power Module / Блок питания AC/DC 24V 20A",
+   "article": "PW733W",
+   "qty": 4,
+   "price": 294,
+   "unit": "шт"
+  },
+  {
+   "pos": 198,
+   "section": "Система 8 · Hardware",
+   "name": "Power diagnosis module / Модуль диагностики питания 480W",
+   "article": "PW704",
+   "qty": 4,
+   "price": 412,
+   "unit": "шт"
+  },
+  {
+   "pos": 199,
+   "section": "Система 8 · Hardware",
+   "name": "DC/DC Safety Power Module / Модуль безопасного питания 240W SIL3",
+   "article": "PW5010DCF",
+   "qty": 12,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 200,
+   "section": "Система 8 · Hardware",
+   "name": "Rack (14 slots) / Корзина 14 слотов",
+   "article": "CN5014F",
+   "qty": 6,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 201,
+   "section": "Система 8 · Hardware",
+   "name": "Extend the connection module / Модуль расширения связи",
+   "article": "IM5002RJF",
+   "qty": 12,
+   "price": 360,
+   "unit": "шт"
+  },
+  {
+   "pos": 202,
+   "section": "Система 8 · Hardware",
+   "name": "DI Module (16-channel) / Модуль дискретного ввода 16 каналов SIL3",
+   "article": "DI5016F",
+   "qty": 13,
+   "price": 625,
+   "unit": "шт"
+  },
+  {
+   "pos": 203,
+   "section": "Система 8 · Hardware",
+   "name": "Safety DI Terminal Block / Клеммный блок DI",
+   "article": "TU5016DIF",
+   "qty": 13,
+   "price": 37,
+   "unit": "шт"
+  },
+  {
+   "pos": 204,
+   "section": "Система 8 · Hardware",
+   "name": "DB37 Cable 2m / Кабель DB37",
+   "article": "LE37-G5Pro(F)-02",
+   "qty": 41,
+   "price": 35,
+   "unit": "шт"
+  },
+  {
+   "pos": 205,
+   "section": "Система 8 · Hardware",
+   "name": "DO Module (16-channel) / Модуль дискретного вывода 16 каналов SIL3",
+   "article": "DO5016F",
+   "qty": 9,
+   "price": 647,
+   "unit": "шт"
+  },
+  {
+   "pos": 206,
+   "section": "Система 8 · Hardware",
+   "name": "Safety DO Terminal Block / Клеммный блок DO",
+   "article": "TU5016DOF",
+   "qty": 9,
+   "price": 34,
+   "unit": "шт"
+  },
+  {
+   "pos": 207,
+   "section": "Система 8 · Hardware",
+   "name": "AI Module (8-channel) / Модуль аналогового ввода 8 каналов 4-20mA SIL3",
+   "article": "AI5008F-H",
+   "qty": 19,
+   "price": 735,
+   "unit": "шт"
+  },
+  {
+   "pos": 208,
+   "section": "Система 8 · Hardware",
+   "name": "Safety AI Current-type Terminal Block / Клеммный блок AI",
+   "article": "TU5008AIF",
+   "qty": 19,
+   "price": 38,
+   "unit": "шт"
+  },
+  {
+   "pos": 209,
+   "section": "Система 8 · Hardware",
+   "name": "G5pro empty module / Пустой модуль",
+   "article": "AM5000",
+   "qty": 6,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 210,
+   "section": "Система 8 · Hardware",
+   "name": "Weidmüller relay with LED and socket / Реле Weidmüller 2NO+2NC 24VDC",
+   "article": "DRM270024L + FS 2CO ECO",
+   "qty": 144,
+   "price": 5,
+   "unit": "шт"
+  },
+  {
+   "pos": 211,
+   "section": "Система 8 · Hardware",
+   "name": "Hart Multiplexer / Мультиплексор HART",
+   "article": "HUX-MUX",
+   "qty": 10,
+   "price": 460,
+   "unit": "шт"
+  },
+  {
+   "pos": 212,
+   "section": "Система 8 · Hardware",
+   "name": "Baseboard bus terminal / Шинный терминал базовой платы",
+   "article": "ME 22.5 TBUS",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 213,
+   "section": "Система 8 · Hardware",
+   "name": "Baseboard wiring terminals / Клеммы подключения базовой платы",
+   "article": "IMC 1.5-3.81, MC 1.5-3.81",
+   "qty": 1,
+   "price": 15,
+   "unit": "шт"
+  },
+  {
+   "pos": 214,
+   "section": "Система 8 · Software",
+   "name": "I-SCADA Configuration Management Software 1000 points / ПО управления конфигурацией",
+   "article": "I-SCADA-DEV(1000)",
+   "qty": 1,
+   "price": 794,
+   "unit": "шт"
+  },
+  {
+   "pos": 215,
+   "section": "Система 8 · Software",
+   "name": "Engineer Workstation / Инженерная рабочая станция Dell T3680, i5-14600K, 16G, 1TB SSD",
+   "article": "Dell T3680_16G_Single SSD",
+   "qty": 1,
+   "price": 1543,
+   "unit": "шт"
+  },
+  {
+   "pos": 216,
+   "section": "Система 8 · Software",
+   "name": "DELL Display 22\" 1920×1080 / Монитор DELL",
+   "article": "DELL 22\"LED",
+   "qty": 1,
+   "price": 171,
+   "unit": "шт"
+  },
+  {
+   "pos": 217,
+   "section": "Система 8 · Cabinet",
+   "name": "SUPCON switch (Barrier) II generation / Коммутатор SUPCON 14×RJ45 + 2 SFP",
+   "article": "SUP-5216",
+   "qty": 2,
+   "price": 257,
+   "unit": "шт"
+  },
+  {
+   "pos": 218,
+   "section": "Система 8 · Cabinet",
+   "name": "SFP Module single mode LC / SFP модуль",
+   "article": "SFP-20S",
+   "qty": 2,
+   "price": 147,
+   "unit": "шт"
+  },
+  {
+   "pos": 219,
+   "section": "Система 8 · Cabinet",
+   "name": "Fiber-Optic Splice Closure 6 ST / Волоконно-оптическая муфта",
+   "article": "SUP-A-06",
+   "qty": 1,
+   "price": 59,
+   "unit": "шт"
+  },
+  {
+   "pos": 220,
+   "section": "Система 8 · Cabinet",
+   "name": "System Cabinet 2100×800×800 RAL7035 / Системный шкаф",
+   "article": "CN011-A0",
+   "qty": 2,
+   "price": 2657,
+   "unit": "шт"
+  },
+  {
+   "pos": 221,
+   "section": "Общее",
+   "name": "HMI 15.6\" screen / Человеко-машинный интерфейс",
+   "article": "TPC1560Gi",
+   "qty": 5,
+   "price": 378,
+   "unit": "шт"
+  },
+  {
+   "pos": 222,
+   "section": "Общее",
+   "name": "Services / Услуги: содействие при строительстве, ПНР, пуске",
+   "article": "",
+   "qty": 8,
+   "price": 13500,
+   "unit": "шт"
+  },
+  {
+   "pos": 223,
+   "section": "Общее",
+   "name": "Packing & Delivery / Упаковка и доставка",
+   "article": "",
+   "qty": 8,
+   "price": 960,
+   "unit": "шт"
+  }
+ ]
+}

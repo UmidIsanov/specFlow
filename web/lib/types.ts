@@ -49,7 +49,21 @@ export type AuditLine = {
   matchedSample: string[];
 };
 
+export type AuditScope = {
+  hasSections: boolean;
+  request: {
+    systemPositions: { tag: string | null; name: string; qty: number }[];
+    objects: { object: string; tags: number; families: { family: string; count: number }[] }[];
+  };
+  offer: {
+    systems: { name: string; lines: number; qty: number; sum: number; di: number; do: number; ai: number; ao: number; controllers: number }[];
+    hmi: number;
+  };
+};
+
 export type TagAudit = {
+  offers: { id: string; supplier: string; number: string | null; currency: string }[];
+  scope: AuditScope;
   offer: {
     id: string;
     supplier: string;

@@ -15,6 +15,72 @@ export function datasheetKey(raw?: string | null): string {
 
 type LineVerdict = "MATCH" | "PARTIAL" | "OUTSIDE" | "NO_TAGS";
 
+// Каналы модулей ввода-вывода по артикулу: DI5016F → 16 DI, AI5008F-H → 8 AI (SUPCON G5Pro).
+const IO_MODULE = /^(DI|DO|AI|AO)50(\d{2})/i;
+
+type SpecRow = { tag: string | null; name: string; qtyPlan: number };
+type OfferRow = { section: string | null; article: string | null; rawName: string; qty: number; price: number };
+
+/**
+ * Сверка по составу — для КП на системы (ПЛК, шкафы), где строки не привязаны к тэгам.
+ * Слева то, чего просит заявка: системные позиции и полевые приборы по объектам.
+ * Справа то, что предлагает КП: системы с суммой каналов I/O.
+ */
+function buildScope(spec: SpecRow[], items: OfferRow[]) {
+  // системные позиции заявки: тэг с типом в скобках — 402100-F&G (PLC), 403300-F&G (HMI)
+  const systemPositions = spec
+    .filter((s) => /\((PLC|HMI|CPU|SCADA|RIO)\)/i.test(s.tag ?? ""))
+    .map((s) => ({ tag: s.tag, name: s.name, qty: s.qtyPlan }));
+
+  const byObject = new Map<string, Map<string, number>>();
+  for (const s of spec) {
+    const m = (s.tag ?? "").toUpperCase().match(/^(\d{4,6})-?([A-Z&]+)/);
+    if (!m) continue;
+    let fam = byObject.get(m[1]);
+    if (!fam) byObject.set(m[1], (fam = new Map()));
+    fam.set(m[2], (fam.get(m[2]) ?? 0) + 1);
+  }
+  const requestObjects = [...byObject.entries()]
+    .map(([object, fam]) => ({
+      object,
+      tags: [...fam.values()].reduce((a, b) => a + b, 0),
+      families: [...fam.entries()].sort((a, b) => b[1] - a[1]).map(([family, count]) => ({ family, count })),
+    }))
+    .sort((a, b) => a.object.localeCompare(b.object));
+
+  // системы КП: раздел до « · » — «Система 1 · Hardware» → «Система 1»
+  const systems = new Map<string, { lines: number; qty: number; sum: number; di: number; do: number; ai: number; ao: number; controllers: number }>();
+  for (const i of items) {
+    const key = (i.section ?? "Без раздела").split(" · ")[0];
+    let sys = systems.get(key);
+    if (!sys) systems.set(key, (sys = { lines: 0, qty: 0, sum: 0, di: 0, do: 0, ai: 0, ao: 0, controllers: 0 }));
+    sys.lines++;
+    sys.qty += i.qty;
+    sys.sum += i.qty * i.price;
+    const m = (i.article ?? "").match(IO_MODULE);
+    if (m) sys[m[1].toLowerCase() as "di" | "do" | "ai" | "ao"] += Number(m[2]) * i.qty;
+    if (/контроллер|controller/i.test(i.rawName) && !/co-?processor|сопроцессор/i.test(i.rawName)) sys.controllers += i.qty;
+  }
+  const hmi = items.filter((i) => /\bHMI\b|панель/i.test(i.rawName)).reduce((s, i) => s + i.qty, 0);
+
+  return {
+    hasSections: items.some((i) => i.section),
+    request: { systemPositions, objects: requestObjects },
+    offer: {
+      systems: [...systems.entries()]
+        .map(([name, v]) => ({ name, ...v }))
+        // «Система 1 … Система 8», общие позиции — в конце
+        .sort((a, b) => {
+          const na = a.name.match(/\d+/);
+          const nb = b.name.match(/\d+/);
+          if (na && nb) return Number(na[0]) - Number(nb[0]);
+          return na ? -1 : nb ? 1 : a.name.localeCompare(b.name);
+        }),
+      hmi,
+    },
+  };
+}
+
 const VERDICT_LABEL: Record<LineVerdict, string> = {
   MATCH: "По заявке",
   PARTIAL: "Частично вне заявки",
@@ -41,6 +107,11 @@ auditRouter.get(
     if (!offer) throw new HttpError(404, "КП не найдено");
 
     const spec = await prisma.specItem.findMany({ where: { projectId } });
+    const offers = await prisma.offer.findMany({
+      where: { projectId },
+      include: { supplier: true },
+      orderBy: { createdAt: "asc" },
+    });
 
     // в заявке тэг уникален и задаёт позицию
     const byTag = new Map<string, (typeof spec)[number]>();
@@ -124,6 +195,8 @@ auditRouter.get(
     const offeredInRequest = [...offeredCount.keys()].filter((k) => byTag.has(k)).length;
 
     res.json({
+      offers: offers.map((o) => ({ id: o.id, supplier: o.supplier.name, number: o.number, currency: o.currency })),
+      scope: buildScope(spec, offer.items),
       offer: {
         id: offer.id,
         supplier: offer.supplier.name,

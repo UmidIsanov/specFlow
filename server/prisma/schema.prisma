@@ -97,6 +97,7 @@ model OfferItem {
   article      String?
   code         String? // код продукции из КП поставщика
   tagsJson     String? // теговые номера, перечисленные в строке КП
+  section      String? // раздел КП: «Система 1 · Hardware», «Общее»
   datasheet    String? // опросный лист, на который ссылается строка КП
   manufacturer String?
   unit         String  @default("шт")
