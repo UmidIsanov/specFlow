@@ -1,0 +1,10 @@
+import { readFileSync } from "node:fs";
+import { parsePdfTable } from "./src/lib/pdfTable.js";
+const t = await parsePdfTable(readFileSync("/Users/umid/Downloads/Заявка_6450_рев_2_ПГО.pdf"));
+console.log("страниц:", t.pages, "| позиций:", t.rows.length);
+console.log("\nраспознанные колонки:");
+for (const c of t.columns) if (c.field) console.log(`  ${String(Math.round(c.from)).padStart(4)}-${String(Math.round(c.to)).padEnd(4)} ${c.field.padEnd(11)} ${c.title.slice(0, 58)}`);
+console.log("\nпервые позиции:");
+for (const r of t.rows.slice(0, 5)) console.log("  ", JSON.stringify(r));
+console.log("\nпоследние:");
+for (const r of t.rows.slice(-2)) console.log("  ", JSON.stringify(r));

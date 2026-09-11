@@ -1,0 +1,210 @@
+// SpecFlow — учёт слаботочных систем на объекте
+// SQLite: enum не поддерживается, статусы храним строками (см. src/lib/enums.ts)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  code      String?
+  customer  String?
+  address   String?
+  status    String   @default("ACTIVE") // ACTIVE | DONE | PAUSED
+  createdAt DateTime @default(now())
+
+  specItems   SpecItem[]
+  offers      Offer[]
+  deliveries  Delivery[]
+  acts        WorkAct[]
+  stockMoves  StockMove[]
+  deviations  Deviation[]
+}
+
+/// Позиция проектной спецификации (то, что приходит из pdf-spec-converter)
+model SpecItem {
+  id           String  @id @default(cuid())
+  projectId    String
+  pos          String? // № по спецификации
+  system       String  @default("ПС") // ПС | СКС | СОТ | АПТ | ПЕРИМЕТР | ...
+  name         String
+  article      String? // маркировка / артикул
+  manufacturer String?
+  unit         String  @default("шт")
+  qtyPlan      Float   @default(0)
+  pricePlan    Float?
+  note         String?
+  code         String? // код продукции из спецификации (RBZ-319538) — самый надёжный ключ
+  tag          String? // теговый номер прибора: 402100-AIT-9001 TG
+  datasheet    String? // опросный лист: MOF3-UN-402100-INS-DAT-9003
+  section      String? // Оборудование | Кабели и провода | Изделия и материалы
+  building     String? // здание/объект внутри площадки
+  docRef       String? // шифр документа проектного института
+
+  project    Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  offerItems OfferItem[]
+  deliveries DeliveryItem[]
+  actItems   WorkActItem[]
+  stockMoves StockMove[]
+  deviations Deviation[]
+
+  @@index([projectId])
+}
+
+model Supplier {
+  id      String  @id @default(cuid())
+  name    String
+  inn     String?
+  contact String?
+  note    String?
+
+  offers     Offer[]
+  deliveries Delivery[]
+}
+
+/// Коммерческое предложение поставщика
+model Offer {
+  id           String   @id @default(cuid())
+  projectId    String
+  supplierId   String
+  number       String?
+  date         DateTime @default(now())
+  currency     String   @default("UZS")
+  deliveryDays Int?
+  status       String   @default("DRAFT") // DRAFT | ANALYZED | ACCEPTED | REJECTED
+  createdAt    DateTime @default(now())
+
+  project  Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier Supplier    @relation(fields: [supplierId], references: [id])
+  items    OfferItem[]
+
+  @@index([projectId])
+}
+
+/// Строка КП + результат сопоставления со спецификацией
+model OfferItem {
+  id           String  @id @default(cuid())
+  offerId      String
+  specItemId   String?
+  rawPos       String?
+  rawName      String
+  article      String?
+  code         String? // код продукции из КП поставщика
+  tagsJson     String? // теговые номера, перечисленные в строке КП
+  datasheet    String? // опросный лист, на который ссылается строка КП
+  manufacturer String?
+  unit         String  @default("шт")
+  qty          Float   @default(0)
+  price        Float   @default(0)
+
+  matchType       String  @default("NONE")    // EXACT | ANALOG | NONE
+  matchScore      Float   @default(0)         // 0..1
+  verdict         String  @default("PENDING") // PENDING | OK | ANALOG_OK | ANALOG_RISK | REJECT
+  engineerComment String?
+  analysisJson    String? // причины сопоставления и расхождения характеристик
+
+  offer    Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  specItem SpecItem? @relation(fields: [specItemId], references: [id])
+
+  @@index([offerId])
+  @@index([specItemId])
+}
+
+/// Приход оборудования на объект
+model Delivery {
+  id         String   @id @default(cuid())
+  projectId  String
+  supplierId String?
+  number     String?
+  waybill    String? // № накладной
+  date       DateTime @default(now())
+  note       String?
+
+  project  Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier Supplier?      @relation(fields: [supplierId], references: [id])
+  items    DeliveryItem[]
+
+  @@index([projectId])
+}
+
+model DeliveryItem {
+  id         String @id @default(cuid())
+  deliveryId String
+  specItemId String
+  qty        Float  @default(0)
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  specItem SpecItem @relation(fields: [specItemId], references: [id])
+
+  @@index([deliveryId])
+}
+
+/// Акт выполненных работ / акт установки оборудования (основа ИТД)
+model WorkAct {
+  id        String    @id @default(cuid())
+  projectId String
+  number    String?
+  date      DateTime  @default(now())
+  location  String? // этаж / помещение / участок
+  system    String    @default("ПС")
+  status    String    @default("DRAFT") // DRAFT | SIGNED
+  signedAt  DateTime?
+
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items   WorkActItem[]
+
+  @@index([projectId])
+}
+
+model WorkActItem {
+  id         String @id @default(cuid())
+  actId      String
+  specItemId String
+  qty        Float  @default(0)
+
+  act      WorkAct  @relation(fields: [actId], references: [id], onDelete: Cascade)
+  specItem SpecItem @relation(fields: [specItemId], references: [id])
+
+  @@index([actId])
+}
+
+/// Движение ТМЦ по складу объекта
+model StockMove {
+  id         String   @id @default(cuid())
+  projectId  String
+  specItemId String
+  qty        Float // + приход, - списание
+  type       String // IN | OUT | ADJUST
+  refType    String? // DELIVERY | ACT | MANUAL
+  refId      String?
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  specItem SpecItem @relation(fields: [specItemId], references: [id])
+
+  @@index([projectId])
+  @@index([specItemId])
+}
+
+/// Отклонение от проекта — попадает в исполнительную документацию
+model Deviation {
+  id          String   @id @default(cuid())
+  projectId   String
+  specItemId  String?
+  kind        String // REPLACE | QTY_CHANGE | EXCLUDE | ADD
+  description String
+  approvedBy  String?
+  date        DateTime @default(now())
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  specItem SpecItem? @relation(fields: [specItemId], references: [id])
+
+  @@index([projectId])
+}

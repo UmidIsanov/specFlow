@@ -1,0 +1,17 @@
+import { readFileSync, writeFileSync } from "node:fs";
+import { parsePdfTable } from "./src/lib/pdfTable.js";
+const t = await parsePdfTable(readFileSync("/Users/umid/Downloads/Заявка_6450_рев_2_ПГО.pdf"));
+const nums = t.rows.map((r) => Number(r.pos)).sort((a, b) => a - b);
+const gaps: string[] = [];
+for (let i = 1; i < nums.length; i++) if (nums[i] !== nums[i - 1] + 1) gaps.push(`${nums[i - 1]}→${nums[i]}`);
+console.log(`позиции ${nums[0]}..${nums[nums.length - 1]}, всего ${nums.length}, пропусков ${gaps.length}`, gaps.slice(0, 5).join(" "));
+console.log("дубликатов номеров:", nums.length - new Set(nums).size);
+console.log("без тэга:", t.rows.filter((r) => !r.tag).length, "| без ОЛ:", t.rows.filter((r) => !r.datasheet).length, "| без кол-ва:", t.rows.filter((r) => !r.qty).length);
+console.log("суммарное кол-во:", t.rows.reduce((s, r) => s + (r.qty ?? 0), 0));
+const byUnit: Record<string, number> = {};
+for (const r of t.rows) byUnit[r.unit ?? "?"] = (byUnit[r.unit ?? "?"] ?? 0) + 1;
+console.log("единицы:", byUnit);
+const objects = new Set(t.rows.map((r) => (r.tag ?? "").match(/^(\d{6})/)?.[1]).filter(Boolean));
+console.log("объекты (по префиксу тэга):", [...objects].sort().join(" "));
+writeFileSync("/tmp/zayavka.json", JSON.stringify(t.rows, null, 1));
+console.log("сохранено /tmp/zayavka.json");
