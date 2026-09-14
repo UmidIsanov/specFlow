@@ -1,0 +1,386 @@
+<title>SpecFlow — как пользоваться</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f5f7fa;
+    --surface: #ffffff;
+    --ink: #16202e;
+    --muted: #5b6675;
+    --line: #dfe4ec;
+    --line-strong: #c9d1dc;
+    --accent: #1f6feb;
+    --accent-ink: #1a5fd0;
+    --accent-soft: #eaf1fd;
+    --good: #1e8e5a;      --good-soft: #e8f5ee;
+    --info: #1f6feb;      --info-soft: #eaf1fd;
+    --warn: #b7791f;      --warn-soft: #fdf3e1;
+    --danger: #c53030;    --danger-soft: #fdecec;
+    --neutral: #6b7280;   --neutral-soft: #eef0f3;
+    --code-bg: #eef1f5;
+    --display: "Roboto Slab", "Georgia", serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f141b; --surface: #171e28; --ink: #e6eaf0; --muted: #98a3b3;
+      --line: #2a3441; --line-strong: #3a4656;
+      --accent: #5b9bff; --accent-ink: #8ab8ff; --accent-soft: #1b2a44;
+      --good: #4cc38a; --good-soft: #16302a;
+      --info: #5b9bff; --info-soft: #1b2a44;
+      --warn: #e2a23b; --warn-soft: #3a2c15;
+      --danger: #f07171; --danger-soft: #3d1c1c;
+      --neutral: #98a3b3; --neutral-soft: #222b36;
+      --code-bg: #222b36;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f141b; --surface: #171e28; --ink: #e6eaf0; --muted: #98a3b3;
+    --line: #2a3441; --line-strong: #3a4656;
+    --accent: #5b9bff; --accent-ink: #8ab8ff; --accent-soft: #1b2a44;
+    --good: #4cc38a; --good-soft: #16302a;
+    --info: #5b9bff; --info-soft: #1b2a44;
+    --warn: #e2a23b; --warn-soft: #3a2c15;
+    --danger: #f07171; --danger-soft: #3d1c1c;
+    --neutral: #98a3b3; --neutral-soft: #222b36;
+    --code-bg: #222b36;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+    padding-block: 0 64px;
+    padding-inline: 20px;
+  }
+  a { color: var(--accent-ink); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .shell { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 40px; }
+  @media (min-width: 1000px) { .shell { grid-template-columns: 220px minmax(0, 1fr); } }
+
+  nav.toc { display: none; }
+  @media (min-width: 1000px) {
+    nav.toc { display: block; position: sticky; top: 24px; align-self: start; padding-top: 44px; }
+  }
+  nav.toc .eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
+  nav.toc li a { display: block; padding: 5px 12px; font-size: 14px; color: var(--muted); border-left: 2px solid transparent; margin-left: -2px; }
+  nav.toc li a:hover { color: var(--ink); border-left-color: var(--line-strong); text-decoration: none; }
+  nav.toc li.step a { color: var(--ink); }
+
+  main { max-width: 70ch; }
+
+  header.hero { padding: 44px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 36px; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; color: var(--muted); }
+  .brand .mark { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 600; font-family: var(--body); }
+  h1 { font-family: var(--display); font-weight: 600; font-size: 34px; line-height: 1.2; margin: 14px 0 8px; text-wrap: balance; }
+  .lede { font-size: 18px; color: var(--muted); margin: 0; }
+
+  h2 { font-family: var(--display); font-weight: 600; font-size: 24px; line-height: 1.25; margin: 48px 0 14px; text-wrap: balance; scroll-margin-top: 20px; }
+  h3 { font-weight: 600; font-size: 17px; margin: 26px 0 8px; }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin: 4px 0; }
+  li::marker { color: var(--muted); }
+  strong { font-weight: 600; }
+  code { font-family: var(--mono); font-size: .92em; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
+
+  .tab { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px; padding: 4px 12px 4px 8px; margin-bottom: 8px; }
+  .tab::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+  .btn { display: inline-block; font-size: .92em; font-weight: 500; border: 1px solid var(--line-strong); border-radius: 7px; padding: 1px 9px; background: var(--surface); white-space: nowrap; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 15px; }
+  .tablewrap { overflow-x: auto; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line-strong); }
+  td:first-child { white-space: nowrap; }
+
+  .chip { display: inline-block; font-size: 12.5px; font-weight: 500; border-radius: 6px; padding: 2px 9px; border: 1px solid transparent; white-space: nowrap; }
+  .chip.good { color: var(--good); background: var(--good-soft); }
+  .chip.info { color: var(--info); background: var(--info-soft); }
+  .chip.warn { color: var(--warn); background: var(--warn-soft); }
+  .chip.danger { color: var(--danger); background: var(--danger-soft); }
+  .chip.neutral { color: var(--neutral); background: var(--neutral-soft); }
+
+  .screen { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 14px 0 18px; }
+  .screen .cap { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  .drop { border: 2px dashed var(--line-strong); border-radius: 10px; padding: 16px; text-align: center; color: var(--muted); font-size: 15px; }
+  .drop b { color: var(--accent-ink); font-weight: 500; }
+
+  .note { border-left: 3px solid var(--warn); background: var(--warn-soft); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 14px 0; }
+  .note.good { border-left-color: var(--good); background: var(--good-soft); }
+  .note p:last-child { margin: 0; }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 12px 0 18px; }
+  .steps li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; margin: 8px 0; }
+  .steps li::before { content: counter(step); width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; display: grid; place-items: center; font-family: var(--body); }
+
+  .faq dt { font-weight: 600; margin-top: 16px; }
+  .faq dd { margin: 4px 0 0; color: var(--ink); }
+
+  .flow { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 8px; }
+  .flow li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .flow li span.n { font-family: var(--display); font-weight: 600; color: var(--accent-ink); font-size: 18px; text-align: center; }
+
+  footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  html { scroll-behavior: smooth; }
+</style>
+
+<div class="shell">
+  <nav class="toc" aria-label="Содержание">
+    <p class="eyebrow">Содержание</p>
+    <ol>
+      <li><a href="#what">Что это</a></li>
+      <li><a href="#open">Как открыть</a></li>
+      <li><a href="#objects">Объекты</a></li>
+      <li class="step"><a href="#spec">1 · Спецификация</a></li>
+      <li class="step"><a href="#kp">2 · Анализ КП</a></li>
+      <li class="step"><a href="#audit">2а · Сверка с заявкой</a></li>
+      <li class="step"><a href="#supply">3 · Поставки и склад</a></li>
+      <li class="step"><a href="#acts">4 · Акты и списание</a></li>
+      <li><a href="#export">Выгрузка в Excel</a></li>
+      <li><a href="#faq">Если что-то не так</a></li>
+      <li><a href="#flow">Кратко</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="brand"><span class="mark">SF</span> SpecFlow</div>
+      <h1>Как пользоваться программой</h1>
+      <p class="lede">Простыми словами, шаг за шагом. От загрузки спецификации до подписанного акта.</p>
+    </header>
+
+    <h2 id="what">Что это за программа</h2>
+    <p>SpecFlow помогает инженеру на стройке в четырёх делах:</p>
+    <ol>
+      <li>Держать спецификацию проекта в одном месте.</li>
+      <li>Быстро проверять предложения поставщиков: то ли они предлагают, что нужно.</li>
+      <li>Считать, сколько оборудования привезли, сколько смонтировали, сколько ещё заказать.</li>
+      <li>Готовить акты и списывать материалы со склада.</li>
+    </ol>
+    <p>Раньше это делали вручную в Excel и в голове. Теперь программа считает сама, а инженер только проверяет и принимает решение.</p>
+
+    <h2 id="open">Как открыть</h2>
+    <p>Программа работает в браузере. Адрес: <code>http://localhost:3000</code></p>
+    <p>Ничего устанавливать на компьютер не нужно.</p>
+
+    <h2 id="objects">Главный экран — «Объекты»</h2>
+    <p>Объект — это стройка или здание, по которому вы работаете. Например: «МОФ-3, здание вторичного просеивания».</p>
+    <p>На главном экране — карточки объектов. На каждой видно: сколько позиций в спецификации, сколько загружено КП, поставок и актов.</p>
+    <ul>
+      <li><strong>Создать объект</strong> — кнопка <span class="btn primary">+ Новый объект</span> справа сверху. Достаточно написать название.</li>
+      <li><strong>Открыть объект</strong> — нажмите на карточку.</li>
+      <li><strong>Удалить объект</strong> — иконка корзины на карточке. Программа переспросит. Удаляется всё: спецификация, КП, поставки, акты. Назад не вернуть.</li>
+    </ul>
+
+    <h3>Внутри объекта — вкладки</h3>
+    <p>Они идут в том порядке, в котором идёт работа.</p>
+    <div class="tablewrap"><table>
+      <tr><th>Вкладка</th><th>Для чего</th></tr>
+      <tr><td>Сводка</td><td>Общая картина по объекту одним взглядом</td></tr>
+      <tr><td>Спецификация</td><td>Загрузить проект и посмотреть все позиции</td></tr>
+      <tr><td>Анализ КП</td><td>Проверить предложения поставщиков</td></tr>
+      <tr><td>Сверка с заявкой</td><td>Сравнить КП с заявкой на закуп по номерам приборов</td></tr>
+      <tr><td>Поставки и склад</td><td>Что привезли, что осталось, что дозаказать</td></tr>
+      <tr><td>Акты и ИТД</td><td>Акты установки и списание со склада</td></tr>
+    </table></div>
+
+    <h2 id="spec">Шаг 1. Загрузить спецификацию</h2>
+    <span class="tab">Вкладка · Спецификация</span>
+
+    <h3>Какой файл подходит</h3>
+    <ul>
+      <li><strong>Excel</strong> из программы pdf-spec-converter. Это основной вариант.</li>
+      <li><strong>PDF с текстом</strong>, например заявка на закуп. Если в PDF можно выделить текст мышкой — подойдёт.</li>
+      <li><strong>Скан</strong> (фотография, картинка в PDF) — не подойдёт. Его сначала надо прогнать через pdf-spec-converter, а потом загрузить Excel.</li>
+    </ul>
+
+    <h3>Как загрузить</h3>
+    <div class="screen">
+      <p class="cap">Что вы видите</p>
+      <div class="drop"><b>Выберите файл</b> или перетащите сюда<br><small>Excel или PDF</small></div>
+    </div>
+    <ol class="steps">
+      <li>Перетащите файл в пунктирную рамку. Или нажмите на рамку и выберите файл.</li>
+      <li>Программа прочитает файл и покажет, что в нём. Если в Excel несколько листов — выберет самый полный. Лист можно поменять в списке.</li>
+      <li>Под рамкой написано, какие колонки программа нашла: наименование, марка, код продукции, количество.</li>
+      <li>Нажмите <span class="btn primary">Импортировать</span>.</li>
+    </ol>
+    <p>Готово. Появится таблица со всеми позициями.</p>
+
+    <div class="note">
+      <p><strong>Если спецификацию нужно загрузить заново</strong> — поставьте галочку «заменить текущие данные» перед импортом. Старые позиции удалятся, вместо них встанут новые. Без галочки новые позиции добавятся к старым — получится двойной список.</p>
+    </div>
+
+    <h3>Что видно в таблице</h3>
+    <p>Каждая строка — одна позиция проекта. Сверху — фильтры: по зданию, по разделу (оборудование, кабели, материалы), по системе. Есть поиск.</p>
+    <p>Если в спецификации несколько зданий, позиции показаны по зданиям. Так удобно вести монтаж.</p>
+
+    <h2 id="kp">Шаг 2. Проверить предложение поставщика</h2>
+    <span class="tab">Вкладка · Анализ КП</span>
+    <p>КП — коммерческое предложение. Отдел закупок отправил заявку поставщикам, они прислали свои файлы. Обычно там 20–30 страниц. Часть позиций поставщик не предложил, часть заменил на аналоги. Раньше проверять это приходилось вручную.</p>
+
+    <h3>Как загрузить КП</h3>
+    <ol class="steps">
+      <li>Выберите поставщика в списке. Если его нет — нажмите «+ поставщик» и впишите название.</li>
+      <li>Впишите номер КП (по желанию).</li>
+      <li>Перетащите Excel-файл поставщика в рамку.</li>
+      <li>Нажмите <span class="btn primary">Загрузить и проанализировать</span>.</li>
+    </ol>
+    <p>Программа сама сопоставит каждую строку КП с позицией проекта.</p>
+
+    <h3>Что программа проверяет</h3>
+    <p>Она сравнивает не только названия. Она смотрит на:</p>
+    <ul>
+      <li><strong>Код продукции</strong> — самый надёжный признак. Если код совпал, это точно та же вещь.</li>
+      <li><strong>Марку</strong> — даже если написана по-разному: <code>ИП 212-64</code> и <code>ИП212-64</code> это одно и то же.</li>
+      <li><strong>Характеристики</strong> — напряжение, ток, ёмкость, мегапиксели. «12В 7Ач» и «12В 7,2Ач» считаются одинаковыми. А «24В» вместо «12В» — уже разница.</li>
+      <li><strong>Производителя</strong> — «ООО "КБ Пожарной Автоматики"» и «КБ Пожарной Автоматики» это одна фирма.</li>
+    </ul>
+
+    <h3>Что означают цвета</h3>
+    <p>По каждой строке КП программа ставит заключение:</p>
+    <div class="tablewrap"><table>
+      <tr><th>Заключение</th><th>Что значит</th><th>Что делать</th></tr>
+      <tr><td><span class="chip good">Соответствует</span></td><td>Совпал код продукции или марка</td><td>Ничего, всё хорошо</td></tr>
+      <tr><td><span class="chip info">Аналог — годен</span></td><td>Другая марка того же производителя, характеристики те же</td><td>Можно принять</td></tr>
+      <tr><td><span class="chip warn">Аналог — проверить</span></td><td>Что-то отличается: характеристика, производитель, единица измерения</td><td>Прочитать причину, решить самому</td></tr>
+      <tr><td><span class="chip danger">Не подходит</span></td><td>Инженер отклонил</td><td>—</td></tr>
+      <tr><td><span class="chip neutral">Нет в проекте</span></td><td>Такой позиции в спецификации не было</td><td>Проверить, зачем поставщик её добавил</td></tr>
+    </table></div>
+    <p>Под каждым заключением написана <strong>причина</strong>. Например: «Характеристика А: проект 2.5 → КП 1.5». Не нужно перепроверять всё заново — читаете причину и решаете.</p>
+
+    <h3>Своё решение</h3>
+    <p>В колонке справа можно поменять заключение и написать комментарий. Последнее слово всегда за инженером. Программа только подсказывает.</p>
+
+    <h3>Сравнить несколько КП</h3>
+    <p>Ниже — большая таблица. Слева позиции проекта, справа — что предложил каждый поставщик. Сразу видно:</p>
+    <ul>
+      <li>кто какую позицию не предложил — «нет в КП»;</li>
+      <li>где привезут меньше, чем нужно;</li>
+      <li>у кого дешевле — помечено словом «выгоднее». Считаются только те, что технически подходят.</li>
+    </ul>
+    <p>Галочка «Только проблемные позиции» скрывает всё, что в порядке.</p>
+    <p>Если одна и та же вещь нужна в двух зданиях, в этой таблице она показана одной строкой с общим количеством. Так удобно для закупки.</p>
+
+    <h2 id="audit">Шаг 2а. Сверить КП с заявкой</h2>
+    <span class="tab">Вкладка · Сверка с заявкой</span>
+    <p>Это для другого случая. Заявка на закуп — это список приборов, где у каждого прибора свой номер: например <code>402100-AIT-9001</code>. Такой номер называется <strong>тэг</strong>.</p>
+    <p>Поставщик в своём КП пишет одну строку на десять приборов и перечисляет тэги. Сравнивать названия тут бесполезно — программа сравнивает тэги.</p>
+
+    <h3>Что покажет</h3>
+    <ul>
+      <li><strong>Сколько тэгов из КП есть в заявке</strong>, а сколько поставщик предложил сверх заявки.</li>
+      <li><strong>Какие позиции заявки не закрыты</strong> — поставщик их не предложил.</li>
+      <li><strong>Где количество не сходится</strong>: в строке написано «8 штук», а тэгов перечислено 7.</li>
+      <li><strong>Дубли</strong> — один и тот же прибор предложен в двух строках. Это двойная оплата.</li>
+      <li><strong>Опросные листы</strong> — совпадает ли документ, на который ссылается поставщик, с тем, что в заявке.</li>
+    </ul>
+    <p>Если на одну заявку пришло несколько КП, между ними переключаются вкладки сверху.</p>
+
+    <h3>Если КП на целую систему</h3>
+    <p>Бывает, что поставщик предлагает не приборы, а систему целиком: шкаф, контроллер, модули. Тэгов там нет. Тогда программа показывает другую картину: сколько шкафов просит заявка и сколько предлагает КП, сколько каналов ввода-вывода в каждой системе, сколько приборов на каждом объекте. Хватит ли каналов — решает инженер.</p>
+
+    <h2 id="supply">Шаг 3. Поставки и склад</h2>
+    <span class="tab">Вкладка · Поставки и склад</span>
+
+    <h3>Таблица план-факт</h3>
+    <div class="tablewrap"><table>
+      <tr><th>Колонка</th><th>Что значит</th></tr>
+      <tr><td>План</td><td>Сколько нужно по проекту</td></tr>
+      <tr><td>Привезено</td><td>Сколько уже приехало на объект</td></tr>
+      <tr><td>Смонтировано</td><td>Сколько установлено по подписанным актам</td></tr>
+      <tr><td>На складе</td><td>Привезено минус смонтировано</td></tr>
+      <tr><td>Дозаказать</td><td>План минус привезено. Жёлтым — если что-то ещё не заказано</td></tr>
+      <tr><td>Готовность</td><td>Процент выполнения</td></tr>
+    </table></div>
+
+    <h3>Записать поставку</h3>
+    <p>Когда приехала машина:</p>
+    <ol class="steps">
+      <li>Нажмите <span class="btn primary">+ Приход на склад</span>.</li>
+      <li>Выберите поставщика, впишите номер накладной.</li>
+      <li>В списке найдите позиции (есть поиск) и впишите, сколько приехало.</li>
+      <li>Нажмите <span class="btn primary">Оприходовать</span>.</li>
+    </ol>
+    <p>Оборудование появится на складе объекта.</p>
+
+    <h2 id="acts">Шаг 4. Акты и списание</h2>
+    <span class="tab">Вкладка · Акты и ИТД</span>
+    <p>ИТД — исполнительно-техническая документация. Это то, что сдают заказчику после работ.</p>
+
+    <h3>Сделать акт установки</h3>
+    <p>Когда смонтировали участок:</p>
+    <ol class="steps">
+      <li>Нажмите <span class="btn primary">+ Акт установки</span>.</li>
+      <li>Впишите номер акта, участок (этаж, помещение), выберите систему.</li>
+      <li>Найдите позиции и впишите, сколько установили. Рядом написано, сколько есть на складе.</li>
+      <li>Нажмите <span class="btn primary">Создать акт</span>.</li>
+    </ol>
+    <p>Акт создан как черновик. Объёмы пока не считаются выполненными.</p>
+
+    <h3>Подписать акт</h3>
+    <p>Нажмите <span class="btn">Подписать и списать со склада</span>. После этого объёмы попадут в «Смонтировано», а материалы спишутся со склада автоматически.</p>
+    <div class="note">
+      <p>Если списываете больше, чем есть на складе, программа предупредит. Спишет всё равно — на стройке факт монтажа важнее. Но это сигнал разобраться с приходом.</p>
+    </div>
+
+    <h3>Печатная форма</h3>
+    <p>У каждого акта есть кнопка <span class="btn">Печатная форма</span>. Откроется акт в формате А4 с таблицей и местами для подписей. Кнопка «Печать / PDF» — распечатать или сохранить.</p>
+
+    <h3>Отклонения от проекта</h3>
+    <p>Если что-то сделали не по проекту — заменили оборудование, изменили объём, что-то исключили — запишите это через <span class="btn">+ Отклонение от проекта</span>. Укажите, что изменилось и кто согласовал. Эти записи нужны для исполнительной документации.</p>
+
+    <h2 id="export">Выгрузка в Excel</h2>
+    <p>На каждой вкладке есть кнопка со стрелкой вниз — <span class="btn">↓ … в Excel</span>. Файл скачается на компьютер.</p>
+    <div class="tablewrap"><table>
+      <tr><th>Где</th><th>Что в файле</th></tr>
+      <tr><td>Спецификация</td><td>Все позиции + лист «Итого по наименованиям»</td></tr>
+      <tr><td>Анализ КП</td><td>Таблица сравнения всех КП + сводка по поставщикам</td></tr>
+      <tr><td>Страница одного КП</td><td>Техническое заключение с причинами + список того, что не предложено</td></tr>
+      <tr><td>Сверка с заявкой</td><td>Строки КП с заключением, не предложенное, дубли</td></tr>
+      <tr><td>Поставки и склад</td><td>План-факт + отдельный лист «Дозаказать»</td></tr>
+    </table></div>
+    <p>Эти файлы можно отправлять в отдел закупок или заказчику.</p>
+
+    <h2 id="faq">Если что-то пошло не так</h2>
+    <dl class="faq">
+      <dt>Файл не загружается, пишет «не удалось распознать таблицу»</dt>
+      <dd>Скорее всего, это скан. Прогоните его через pdf-spec-converter и загрузите Excel. Или у файла необычная шапка — проверьте, что есть колонки «Наименование» и «Кол-во».</dd>
+      <dt>Программа взяла не тот лист из Excel</dt>
+      <dd>Перед импортом выберите нужный лист в списке под рамкой.</dd>
+      <dt>Строка КП прицепилась не к той позиции проекта</dt>
+      <dd>Такое бывает, если марки очень похожи. На странице КП поменяйте заключение вручную и напишите комментарий.</dd>
+      <dt>Загрузил спецификацию два раза, всё задвоилось</dt>
+      <dd>Загрузите ещё раз с галочкой «заменить текущие данные».</dd>
+      <dt>Списал со склада больше, чем было</dt>
+      <dd>Это не ошибка. Значит, приход записали не полностью. Найдите накладную и оприходуйте недостающее.</dd>
+      <dt>Хочу удалить КП</dt>
+      <dd>Пока только через удаление объекта целиком. Если нужна отдельная кнопка — скажите.</dd>
+    </dl>
+
+    <h2 id="flow">Кратко: как идёт работа</h2>
+    <ol class="flow">
+      <li><span class="n">1</span><span>Создали объект.</span></li>
+      <li><span class="n">2</span><span>Загрузили спецификацию.</span></li>
+      <li><span class="n">3</span><span>Загрузили КП поставщиков — программа проверила, инженер решил.</span></li>
+      <li><span class="n">4</span><span>Выгрузили заключение в Excel, отдали закупкам.</span></li>
+      <li><span class="n">5</span><span>Приехало оборудование — записали поставку.</span></li>
+      <li><span class="n">6</span><span>Смонтировали — сделали акт, подписали, склад обновился сам.</span></li>
+      <li><span class="n">7</span><span>Сдали исполнительную: акты, отклонения.</span></li>
+    </ol>
+
+    <footer>SpecFlow · руководство пользователя · сентябрь 2026</footer>
+  </main>
+</div>
