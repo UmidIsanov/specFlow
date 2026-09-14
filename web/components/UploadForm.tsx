@@ -1,26 +1,33 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { PUBLIC_API } from "@/lib/api";
 import type { WorkbookInfo } from "@/lib/types";
 
 type Field = { name: string; label: string; options?: { value: string; label: string }[] };
 
-/**
- * Загрузка Excel (спецификация или КП).
- * Выгрузка pdf-spec-converter — книга из нескольких листов, поэтому сначала
- * показываем, что в файле, и даём выбрать нужный лист.
- */
-const isPdf = (file?: File | null) => !!file && /\.pdf$/i.test(file.name);
+type Result = { created?: number; sheet?: string; pages?: number; columns?: unknown[]; buildings?: string[] };
 
+const isPdf = (file: File) => /\.pdf$/i.test(file.name);
+const isSheet = (file: File) => /\.(xlsx|xls|csv)$/i.test(file.name);
+
+const fmtSize = (bytes: number) =>
+  bytes >= 1_048_576 ? `${(bytes / 1_048_576).toFixed(1)} МБ` : `${Math.max(1, Math.round(bytes / 1024))} КБ`;
+
+/**
+ * Импорт документа: перетащить или выбрать файл, увидеть, что в нём, и загрузить.
+ * Excel из pdf-spec-converter — книга из нескольких листов, поэтому лист показываем до импорта;
+ * PDF с текстовым слоем уходит в разбор по сетке таблицы, сканы не читаются.
+ */
 export default function UploadForm({
   action,
   pdfAction,
   title,
   hint,
   fields = [],
-  submitLabel = "Загрузить",
+  submitLabel = "Импортировать",
+  allowReplace = false,
 }: {
   action: string;
   /** Куда отправлять PDF: у него своя разборка по сетке таблицы. */
@@ -29,68 +36,91 @@ export default function UploadForm({
   hint?: string;
   fields?: Field[];
   submitLabel?: string;
+  /** Показать флажок «заменить текущие данные». */
+  allowReplace?: boolean;
 }) {
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [book, setBook] = useState<WorkbookInfo | null>(null);
   const [sheet, setSheet] = useState("");
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(fields.map((f) => [f.name, f.options?.[0]?.value ?? ""]))
+  );
+  const [replace, setReplace] = useState(false);
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    setBook(null);
-    setSheet("");
-    setMessage(null);
-    setError(null);
-    if (!file) return;
-    // у PDF листов нет — разбирать нечего, идём сразу на импорт
-    if (isPdf(file)) return;
+  const accept = pdfAction ? ".xlsx,.xls,.csv,.pdf" : ".xlsx,.xls,.csv";
 
-    setScanning(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch(`${PUBLIC_API}/api/spec/inspect`, { method: "POST", body: fd });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Не удалось прочитать файл");
-      const info: WorkbookInfo = await res.json();
-      setBook(info);
-      setSheet(info.recommended);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка чтения файла");
-    } finally {
-      setScanning(false);
-    }
-  }
+  const pick = useCallback(
+    async (next: File | null) => {
+      setFile(next);
+      setBook(null);
+      setSheet("");
+      setResult(null);
+      setError(null);
+      if (!next) return;
 
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const fd = new FormData(form);
-    const file = fd.get("file") as File | null;
-    if (!file?.size) {
+      if (isPdf(next) && !pdfAction) {
+        setError("Здесь принимаются только Excel-файлы");
+        return;
+      }
+      if (!isPdf(next) && !isSheet(next)) {
+        setError("Поддерживаются .xlsx, .xls, .csv" + (pdfAction ? " и .pdf" : ""));
+        return;
+      }
+      // у PDF листов нет — разбирать нечего
+      if (isPdf(next)) return;
+
+      setScanning(true);
+      try {
+        const fd = new FormData();
+        fd.append("file", next);
+        const res = await fetch(`${PUBLIC_API}/api/spec/inspect`, { method: "POST", body: fd });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Не удалось прочитать файл");
+        const info: WorkbookInfo = await res.json();
+        setBook(info);
+        setSheet(info.recommended);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Ошибка чтения файла");
+      } finally {
+        setScanning(false);
+      }
+    },
+    [pdfAction]
+  );
+
+  async function submit() {
+    if (!file) {
       setError("Выберите файл");
       return;
     }
+    if (allowReplace && replace && !confirm("Текущие данные будут удалены и заменены файлом. Продолжить?")) return;
+
+    const fd = new FormData();
+    fd.append("file", file);
+    for (const [k, v] of Object.entries(values)) if (v) fd.append(k, v);
+    if (sheet && !isPdf(file)) fd.append("sheet", sheet);
+    if (allowReplace && replace) fd.append("replace", "true");
     const target = isPdf(file) && pdfAction ? pdfAction : action;
-    if (sheet && !isPdf(file)) fd.set("sheet", sheet);
+
     setBusy(true);
     setError(null);
-    setMessage(null);
+    setResult(null);
     try {
       const res = await fetch(`${PUBLIC_API}${target}`, { method: "POST", body: fd });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? `Ошибка ${res.status}`);
-      setMessage(
-        typeof data.created === "number"
-          ? `Загружено строк: ${data.created}${data.sheet ? ` (лист «${data.sheet}»)` : ""}`
-          : "Файл обработан, технический анализ выполнен"
-      );
-      form.reset();
+      setResult(data);
+      setFile(null);
       setBook(null);
       setSheet("");
+      setReplace(false);
+      if (inputRef.current) inputRef.current.value = "";
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка загрузки");
@@ -99,43 +129,67 @@ export default function UploadForm({
     }
   }
 
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    void pick(e.dataTransfer.files?.[0] ?? null);
+  };
+
   const active = book?.sheets.find((s) => s.name === sheet);
 
   return (
-    <form ref={formRef} onSubmit={submit} className="rounded-xl border border-ink-200 bg-white p-4">
+    <div className="rounded-xl border border-ink-200 bg-white p-4">
       <div className="font-medium">{title}</div>
       {hint ? <p className="mt-0.5 text-xs text-ink-400">{hint}</p> : null}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <input
-          type="file"
-          name="file"
-          accept={pdfAction ? ".xlsx,.xls,.csv,.pdf" : ".xlsx,.xls,.csv"}
-          onChange={onFile}
-          className="text-sm file:mr-3 file:rounded-lg file:border file:border-ink-200 file:bg-ink-50 file:px-3 file:py-1.5 file:text-sm"
-        />
-        {fields.map((f) =>
-          f.options ? (
-            <select key={f.name} name={f.name} className="input w-auto" defaultValue={f.options[0]?.value}>
-              {f.options.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input key={f.name} name={f.name} placeholder={f.label} className="input w-40" />
-          )
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        className={`mt-3 flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed px-4 py-4 transition ${
+          dragging ? "border-brand-500 bg-brand-50" : "border-ink-200 hover:border-ink-400 hover:bg-ink-50"
+        }`}
+      >
+        <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={(e) => void pick(e.target.files?.[0] ?? null)} />
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0 text-ink-400">
+          <path d="M12 16V4m0 0l-4 4m4-4l4 4M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2" />
+        </svg>
+        {file ? (
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium">{file.name}</div>
+            <div className="text-xs text-ink-400">
+              {isPdf(file) ? "PDF с текстовым слоем" : "Excel"} · {fmtSize(file.size)}
+              {scanning ? " · читаю…" : ""}
+            </div>
+          </div>
+        ) : (
+          <div className="text-sm">
+            <span className="font-medium text-brand-600">Выберите файл</span>
+            <span className="text-ink-600"> или перетащите сюда</span>
+            <div className="text-xs text-ink-400">{pdfAction ? "Excel или PDF" : "Excel"}</div>
+          </div>
         )}
-        <button
-          disabled={busy || scanning}
-          className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
-        >
-          {busy ? "Обработка…" : submitLabel}
-        </button>
+        {file ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void pick(null);
+              if (inputRef.current) inputRef.current.value = "";
+            }}
+            className="rounded-md px-2 py-1 text-xs text-ink-400 hover:bg-ink-100 hover:text-ink-900"
+          >
+            убрать
+          </button>
+        ) : null}
       </div>
-
-      {scanning ? <p className="mt-2 text-sm text-ink-400">Читаю файл…</p> : null}
 
       {book && book.sheets.length > 0 ? (
         <div className="mt-3 rounded-lg bg-ink-50 p-3">
@@ -158,8 +212,62 @@ export default function UploadForm({
         </div>
       ) : null}
 
-      {message ? <p className="mt-2 text-sm text-emerald-600">{message}</p> : null}
-      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
-    </form>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {fields.map((f) =>
+          f.options ? (
+            <select
+              key={f.name}
+              value={values[f.name] ?? ""}
+              onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
+              className="input w-auto"
+            >
+              {f.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              key={f.name}
+              value={values[f.name] ?? ""}
+              onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
+              placeholder={f.label}
+              className="input w-40"
+            />
+          )
+        )}
+        {allowReplace ? (
+          <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-600">
+            <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} />
+            заменить текущие данные
+          </label>
+        ) : null}
+        <button
+          type="button"
+          onClick={submit}
+          disabled={busy || scanning || !file || !!error}
+          className="ml-auto rounded-lg bg-brand-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+        >
+          {busy ? "Обработка…" : submitLabel}
+        </button>
+      </div>
+
+      {result ? (
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {typeof result.created === "number" ? (
+            <>
+              Загружено строк: <b>{result.created}</b>
+              {result.sheet ? ` · лист «${result.sheet}»` : ""}
+              {result.pages ? ` · страниц ${result.pages}` : ""}
+              {result.buildings?.length ? ` · здания: ${result.buildings.join(", ")}` : ""}
+            </>
+          ) : (
+            "Файл обработан, технический анализ выполнен"
+          )}
+        </div>
+      ) : null}
+      {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+    </div>
   );
 }

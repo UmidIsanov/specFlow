@@ -3,6 +3,7 @@ import type { SpecItem } from "@/lib/types";
 import { Empty, Badge } from "@/components/ui";
 import UploadForm from "@/components/UploadForm";
 import SpecTable from "@/components/SpecTable";
+import ExportButton from "@/components/ExportButton";
 
 const SYSTEMS = ["ПС", "СОУЭ", "СКС", "СОТ", "СКУД", "АПТ", "ПЕРИМЕТР"];
 
@@ -20,6 +21,7 @@ export default async function SpecPage({ params }: { params: Promise<{ id: strin
         pdfAction={`/api/projects/${id}/spec/import-pdf`}
         title="Импорт спецификации или заявки"
         hint="Excel из pdf-spec-converter либо PDF с текстовым слоем — заявка на закуп читается напрямую по сетке таблицы. Сканы нужно сначала прогнать через конвертер."
+        allowReplace
         fields={[
           {
             name: "system",
@@ -34,6 +36,7 @@ export default async function SpecPage({ params }: { params: Promise<{ id: strin
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2 text-sm text-ink-600">
+            <ExportButton path={`/projects/${id}/export/spec.xlsx`} label="Спецификация в Excel" />
             <span>
               Позиций: <b className="tabular">{items.length}</b>
             </span>

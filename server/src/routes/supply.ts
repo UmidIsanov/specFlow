@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { z } from "zod";
-import * as XLSX from "xlsx";
 import { prisma } from "../db.js";
 import { ah, HttpError } from "../lib/http.js";
 import { planFact, planFactTotals } from "../lib/analytics.js";
@@ -269,34 +268,5 @@ supplyRouter.get(
   ah(async (req, res) => {
     const rows = await planFact(req.params.projectId);
     res.json({ rows, totals: planFactTotals(rows) });
-  })
-);
-
-supplyRouter.get(
-  "/projects/:projectId/export/plan-fact.xlsx",
-  ah(async (req, res) => {
-    const rows = await planFact(req.params.projectId);
-    const sheet = XLSX.utils.json_to_sheet(
-      rows.map((r) => ({
-        "№": r.pos ?? "",
-        Система: r.system,
-        Наименование: r.name,
-        Маркировка: r.article ?? "",
-        "Ед.": r.unit,
-        "План": r.qtyPlan,
-        "Привезено": r.delivered,
-        "Смонтировано": r.installed,
-        "На складе": r.stock,
-        "Осталось смонтировать": r.remaining,
-        "Дозаказать": r.toOrder,
-        "Готовность, %": Math.round(r.progress * 100),
-      }))
-    );
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, sheet, "План-факт");
-    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.setHeader("Content-Disposition", 'attachment; filename="plan-fact.xlsx"');
-    res.send(buf);
   })
 );

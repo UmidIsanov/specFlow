@@ -1,9 +1,10 @@
-import { api, PUBLIC_API } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { TagAudit } from "@/lib/types";
 import { Card, Stat, Badge, Empty } from "@/components/ui";
 import AuditTables from "@/components/AuditTables";
 import OfferSwitcher from "@/components/OfferSwitcher";
 import ScopeView from "@/components/ScopeView";
+import ExportButton from "@/components/ExportButton";
 import { nf } from "@/lib/format";
 
 export default async function AuditPage({
@@ -51,14 +52,7 @@ export default async function AuditPage({
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            {!byScope ? (
-              <a
-                href={`${PUBLIC_API}/api/projects/${id}/export/tag-audit.xlsx?offerId=${offer.id}`}
-                className="rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-ink-50"
-              >
-                Выгрузить заключение в Excel
-              </a>
-            ) : null}
+            <ExportButton path={`/projects/${id}/export/tag-audit.xlsx?offerId=${offer.id}`} label="Заключение в Excel" />
             <div className="text-right text-sm text-ink-400">
               Заявка: {nf.format(request.positions)} позиций
               <div>

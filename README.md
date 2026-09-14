@@ -143,7 +143,10 @@ npm run dev          # http://localhost:3000
 | `GET/POST` | `/api/projects/:id/acts` | акты установки |
 | `POST` | `/api/acts/:id/sign` | подписать акт + списать ТМЦ |
 | `GET` | `/api/projects/:id/plan-fact` | план/факт по объекту |
-| `GET` | `/api/projects/:id/export/plan-fact.xlsx` | выгрузка план-факта |
+| `GET` | `/api/projects/:id/export/spec.xlsx` | спецификация + сводка по наименованиям |
+| `GET` | `/api/projects/:id/export/comparison.xlsx` | матрица «спецификация × все КП» |
+| `GET` | `/api/offers/:id/export.xlsx` | техзаключение по одному КП + что не предложено |
+| `GET` | `/api/projects/:id/export/plan-fact.xlsx` | план-факт + лист «дозаказать» |
 | `GET/POST` | `/api/projects/:id/deviations` | отклонения от проекта (ИТД) |
 
 ## Что дальше (вне MVP)

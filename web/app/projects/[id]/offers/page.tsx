@@ -4,6 +4,7 @@ import { Card, Empty, Badge, LinkButton } from "@/components/ui";
 import UploadForm from "@/components/UploadForm";
 import AddSupplierForm from "@/components/AddSupplierForm";
 import ComparisonMatrix from "@/components/ComparisonMatrix";
+import ExportButton from "@/components/ExportButton";
 import { compactMoney, date } from "@/lib/format";
 
 export default async function OffersPage({ params }: { params: Promise<{ id: string }> }) {
@@ -45,7 +46,10 @@ export default async function OffersPage({ params }: { params: Promise<{ id: str
                       {o.deliveryDays ? ` · срок ${o.deliveryDays} дн.` : ""}
                     </div>
                   </div>
-                  <LinkButton href={`/projects/${id}/offers/${o.id}`}>Анализ</LinkButton>
+                  <div className="flex gap-1.5">
+                    <ExportButton path={`/offers/${o.id}/export.xlsx`} label="Excel" />
+                    <LinkButton href={`/projects/${id}/offers/${o.id}`}>Анализ</LinkButton>
+                  </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   <Badge tone="green">точных: {o.stats.exact}</Badge>
@@ -59,7 +63,10 @@ export default async function OffersPage({ params }: { params: Promise<{ id: str
           </div>
 
           <div>
-            <h2 className="mb-3 text-base font-semibold">Сравнение по позициям проекта</h2>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-base font-semibold">Сравнение по позициям проекта</h2>
+              <ExportButton path={`/projects/${id}/export/comparison.xlsx`} label="Сравнение в Excel" />
+            </div>
             <ComparisonMatrix data={comparison} projectId={id} />
           </div>
         </>

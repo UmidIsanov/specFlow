@@ -7,6 +7,7 @@ import { specRouter } from "./routes/spec.js";
 import { offersRouter } from "./routes/offers.js";
 import { supplyRouter } from "./routes/supply.js";
 import { auditRouter } from "./routes/audit.js";
+import { exportRouter } from "./routes/export.js";
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ app.use("/api", specRouter);
 app.use("/api", offersRouter);
 app.use("/api", supplyRouter);
 app.use("/api", auditRouter);
+app.use("/api", exportRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err instanceof ZodError) {

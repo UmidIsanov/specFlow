@@ -3,6 +3,7 @@ import type { Analysis, OfferFull, SpecItem } from "@/lib/types";
 import { Card, VerdictBadge, Badge, Stat, LinkButton } from "@/components/ui";
 import VerdictControl from "@/components/VerdictControl";
 import PrintButton from "@/components/PrintButton";
+import ExportButton from "@/components/ExportButton";
 import { money, nf } from "@/lib/format";
 
 export default async function OfferPage({ params }: { params: Promise<{ id: string; offerId: string }> }) {
@@ -32,6 +33,7 @@ export default async function OfferPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className="no-print flex gap-2">
           <LinkButton href={`/projects/${id}/offers`}>← Все КП</LinkButton>
+          <ExportButton path={`/offers/${offerId}/export.xlsx`} label="Заключение в Excel" />
           <PrintButton />
         </div>
       </div>

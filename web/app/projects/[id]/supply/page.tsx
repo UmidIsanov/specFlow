@@ -1,7 +1,8 @@
-import { api, PUBLIC_API } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Delivery, PlanFact, SpecItem, Supplier } from "@/lib/types";
 import { Card, Badge, Progress, Empty } from "@/components/ui";
 import LineItemsForm from "@/components/LineItemsForm";
+import ExportButton from "@/components/ExportButton";
 import { date, nf, pct } from "@/lib/format";
 
 export default async function SupplyPage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,12 +27,7 @@ export default async function SupplyPage({ params }: { params: Promise<{ id: str
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href={`${PUBLIC_API}/api/projects/${id}/export/plan-fact.xlsx`}
-            className="rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-ink-50"
-          >
-            Выгрузить план-факт в Excel
-          </a>
+          <ExportButton path={`/projects/${id}/export/plan-fact.xlsx`} label="План-факт в Excel" />
           <LineItemsForm mode="delivery" projectId={id} specItems={spec} suppliers={suppliers} />
         </div>
       </div>

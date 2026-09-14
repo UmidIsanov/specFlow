@@ -102,7 +102,7 @@ auditRouter.get(
     const offer = await prisma.offer.findFirst({
       where: offerId ? { id: offerId, projectId } : { projectId },
       include: { supplier: true, items: { orderBy: { rawPos: "asc" } } },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
     });
     if (!offer) throw new HttpError(404, "КП не найдено");
 
@@ -259,6 +259,8 @@ auditRouter.get(
       }[];
       notOffered: { pos: string | null; tag: string | null; name: string; qty: number; unit: string; datasheet: string | null }[];
       duplicated: { tag: string; times: number; lines: string[] }[];
+      summary: { tagsOffered: number };
+      scope: ReturnType<typeof buildScope>;
     };
     if (audit.error) throw new HttpError(404, audit.error);
 
@@ -313,9 +315,43 @@ auditRouter.get(
       "Дубли тэгов"
     );
 
+    // КП на системы: сверка по составу
+    if (audit.summary.tagsOffered === 0) {
+      XLSX.utils.book_append_sheet(
+        wb,
+        XLSX.utils.json_to_sheet([
+          ...audit.scope.request.systemPositions.map((p) => ({ Сторона: "Заявка", Позиция: `${p.tag ?? ""} — ${p.name}`, "Кол-во": p.qty })),
+          ...audit.scope.offer.systems.map((sy) => ({
+            Сторона: "КП",
+            Позиция: sy.name,
+            "Кол-во": sy.controllers ? 1 : "",
+            Контроллеров: sy.controllers,
+            DI: sy.di,
+            DO: sy.do,
+            AI: sy.ai,
+            Сумма: Math.round(sy.sum),
+          })),
+          { Сторона: "КП", Позиция: "HMI", "Кол-во": audit.scope.offer.hmi },
+        ]),
+        "Состав систем"
+      );
+      XLSX.utils.book_append_sheet(
+        wb,
+        XLSX.utils.json_to_sheet(
+          audit.scope.request.objects.map((o) => ({
+            Объект: o.object,
+            Тэгов: o.tags,
+            Состав: o.families.map((f) => `${f.family}: ${f.count}`).join("; "),
+          }))
+        ),
+        "Приборы по объектам"
+      );
+    }
+
     const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+    const filename = `Сверка с заявкой — ${audit.offer.supplier}.xlsx`;
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.setHeader("Content-Disposition", 'attachment; filename="tag-audit.xlsx"');
+    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
     res.send(buf);
   })
 );
