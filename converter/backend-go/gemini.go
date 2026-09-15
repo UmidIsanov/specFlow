@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -28,12 +30,18 @@ type gContent struct {
 	Parts []gPart `json:"parts"`
 }
 
+type gThinking struct {
+	ThinkingBudget int `json:"thinkingBudget"`
+}
+
 type gGenConfig struct {
 	ResponseMimeType string          `json:"responseMimeType"`
 	ResponseSchema   json.RawMessage `json:"responseSchema"`
 	Temperature      float64         `json:"temperature"`
 	// без явного лимита длинная таблица обрезается на полуслове — JSON не парсится
 	MaxOutputTokens int `json:"maxOutputTokens"`
+	// «размышления» — больше половины оплачиваемых токенов; для переписывания таблицы они не нужны
+	ThinkingConfig *gThinking `json:"thinkingConfig,omitempty"`
 }
 
 type gRequest struct {
@@ -65,6 +73,26 @@ type gResponse struct {
 
 var httpClient = &http.Client{Timeout: 5 * time.Minute}
 
+// thinkingConfig ограничивает бюджет размышлений: GEMINI_THINKING_BUDGET (spec) и
+// GEMINI_THINKING_BUDGET_KP. По умолчанию 2048 — достаточно, чтобы не сбиваться, но не платить
+// за 10–13 тысяч токенов раздумий на каждый кусок. -1 — без ограничения (как было).
+func thinkingConfig(mode string) *gThinking {
+	key := "GEMINI_THINKING_BUDGET"
+	if mode == "kp" {
+		key = "GEMINI_THINKING_BUDGET_KP"
+	}
+	budget := 2048
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			budget = n
+		}
+	}
+	if budget < 0 {
+		return nil
+	}
+	return &gThinking{ThinkingBudget: budget}
+}
+
 // parseSpecFromPDF отправляет PDF напрямую в Gemini и возвращает разобранную таблицу.
 // mode: "" / "spec" — спецификация ГОСТ, "kp" — коммерческое предложение поставщика.
 // Повторяет запрос при временных ошибках (429/503) с нарастающей задержкой.
@@ -92,6 +120,7 @@ func parseSpecFromPDF(pdf []byte, mode string) (*SpecResult, error) {
 			ResponseSchema:   json.RawMessage(schema),
 			Temperature:      0,
 			MaxOutputTokens:  65536,
+			ThinkingConfig:   thinkingConfig(mode),
 		},
 	}
 	payload, err := json.Marshal(reqBody)

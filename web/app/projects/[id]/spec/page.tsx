@@ -20,7 +20,7 @@ export default async function SpecPage({ params }: { params: Promise<{ id: strin
         action={`/api/projects/${id}/spec/import`}
         pdfAction={`/api/projects/${id}/spec/import-pdf`}
         title="Импорт спецификации или заявки"
-        hint="Excel из pdf-spec-converter либо PDF с текстовым слоем — заявка на закуп читается напрямую по сетке таблицы. Сканы нужно сначала прогнать через конвертер."
+        hint="Excel из конвертера или любой PDF: с текстовым слоем читается сразу, скан распознаётся через Gemini — до пары минут. Один и тот же файл повторно распознаётся бесплатно."
         allowReplace
         fields={[
           {

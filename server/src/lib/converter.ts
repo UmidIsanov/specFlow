@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { RawRow } from "./xlsx.js";
 import { splitPdf } from "./pdfSplit.js";
 
@@ -85,6 +88,13 @@ const PARALLEL = 2;
 const CHUNK_ATTEMPTS = 2;
 // символы вне кириллицы/латиницы/пунктуации — признак «поплывшего» ответа модели
 const GARBAGE = /[^\u0000-\u024F\u0400-\u04FF\u2000-\u206F\u20A0-\u20CF\u2100-\u214F\u2190-\u21FF\u2200-\u22FF\u2500-\u25FF\s°±×÷№…«»„“”‘’•·]/u;
+
+// Распознанный документ хранится по хэшу: повторная загрузка того же файла — бесплатно
+const CACHE_DIR = process.env.RECOGNITION_CACHE_DIR ?? join(process.cwd(), "data", "recognized");
+
+function cachePath(buf: Buffer, mode: ConverterMode): string {
+  return join(CACHE_DIR, `${createHash("sha256").update(buf).digest("hex")}-${mode}.json`);
+}
 
 export function converterUrl(): string {
   return (process.env.CONVERTER_URL ?? "http://127.0.0.1:8137").replace(/\/$/, "");
@@ -308,6 +318,24 @@ export function normalizeSystemBlocks(items: ConverterItem[]): void {
  * Бросает понятную ошибку, если конвертер недоступен.
  */
 export async function convertPdf(buf: Buffer, filename: string, mode: ConverterMode): Promise<ConvertedDocument> {
+  const cached = cachePath(buf, mode);
+  if (existsSync(cached)) {
+    const doc = JSON.parse(readFileSync(cached, "utf8")) as ConvertedDocument;
+    doc.warnings = [...doc.warnings, "Взято из кэша распознавания — токены не тратились"];
+    doc.usage = { ...doc.usage, requests: 0, input: 0, output: 0, total: 0 };
+    return doc;
+  }
+  const doc = await convertUncached(buf, filename, mode);
+  try {
+    mkdirSync(CACHE_DIR, { recursive: true });
+    writeFileSync(cached, JSON.stringify(doc));
+  } catch {
+    // кэш — удобство, не обязанность
+  }
+  return doc;
+}
+
+async function convertUncached(buf: Buffer, filename: string, mode: ConverterMode): Promise<ConvertedDocument> {
   const { pages, chunks } = await splitPdf(buf, CHUNK_PAGES);
   const base = filename.replace(/\.pdf$/i, "");
 
