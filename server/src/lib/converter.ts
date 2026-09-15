@@ -32,9 +32,12 @@ type ConverterResult = {
   supplier?: string;
   currency?: string;
   declared_total?: number | null;
+  usage?: { model: string; input: number; output: number; total: number } | null;
   items: ConverterItem[];
   error?: string | null;
 };
+
+export type ConverterUsage = { model: string; requests: number; input: number; output: number; total: number };
 
 export type ConvertedDocument = {
   docNumber: string;
@@ -46,6 +49,8 @@ export type ConvertedDocument = {
   rows: RawRow[];
   /** Что стоит перепроверить глазами: распознавание — не гарантия. */
   warnings: string[];
+  /** Сколько токенов ушло на документ — по ним считается цена. */
+  usage: ConverterUsage;
 };
 
 /**
@@ -231,11 +236,71 @@ function mergeChunks(parts: ConverterResult[]): ConverterResult {
         prev.total = prev.total ?? item.total;
         continue;
       }
+      // та же строка пришла из соседнего куска ещё раз — не дублируем
+      const twin = item.pos ? merged.items.find((m) => m.pos === item.pos) : undefined;
+      if (twin && twin.name.slice(0, 30) === item.name.slice(0, 30)) {
+        twin.section = twin.section || item.section;
+        twin.datasheet = twin.datasheet || item.datasheet;
+        twin.price = twin.price ?? item.price;
+        twin.total = twin.total ?? item.total;
+        continue;
+      }
       merged.items.push(item);
     }
     if (maxInThisPart) lastSystemInPrev = maxInThisPart;
   }
   return merged;
+}
+
+const PART_OF: Array<[RegExp, string]> = [
+  [/hardware|аппаратн/i, "Hardware"],
+  [/software|программн|рабочая станция|workstation/i, "Software"],
+  [/cabinet|шкаф/i, "Cabinet"],
+];
+
+/**
+ * Блоки систем — по структуре, а не по нумерации модели: она сбивается на кусках.
+ * Новая система начинается там, где после другого раздела снова идёт Hardware.
+ * Строки после последнего блока без раздела — «Общее» (HMI, услуги, доставка).
+ */
+export function normalizeSystemBlocks(items: ConverterItem[]): void {
+  const partOf = (section?: string) => PART_OF.find(([re]) => re.test(section ?? ""))?.[1];
+  const hardwareBlocks = items.filter((i) => partOf(i.section) === "Hardware").length;
+  const starts = items.filter((i, k) => partOf(i.section) === "Hardware" && partOf(items[k - 1]?.section) !== "Hardware").length;
+  if (hardwareBlocks < 2 || starts < 2) return;
+
+  // после последнего шкафа идут общие позиции — HMI, услуги, доставка — без своего заголовка,
+  // и модель приписывает их к шкафу; отсчитываем от последней настоящей позиции шкафа
+  const GENERAL = /\bHMI\b|услуг|services|packing|доставк|delivery|ПНР|commissioning/i;
+  let lastCabinet = -1;
+  items.forEach((i, k) => {
+    if (partOf(i.section) === "Cabinet" && !GENERAL.test(i.name)) lastCabinet = k;
+  });
+
+  let system = 0;
+  let lastPart: string | undefined;
+  let inBlock = false;
+  items.forEach((item, k) => {
+    if (lastCabinet >= 0 && k > lastCabinet && GENERAL.test(item.name)) {
+      item.section = "Общее";
+      return;
+    }
+    const part = partOf(item.section);
+    if (part === "Hardware" && lastPart !== "Hardware") {
+      system++;
+      inBlock = true;
+    }
+    if (part) {
+      item.section = `Система ${system} · ${part}`;
+      lastPart = part;
+    } else if (inBlock && (item.section ?? "").trim() === "") {
+      // без раздела после блока: продолжение той же части или общие позиции в конце
+      item.section = lastPart === "Cabinet" ? "Общее" : `Система ${system} · ${lastPart ?? "Hardware"}`;
+      if (lastPart === "Cabinet") inBlock = false;
+    } else if (!inBlock && !item.section) {
+      item.section = "Общее";
+    }
+  });
 }
 
 /**
@@ -298,6 +363,16 @@ export async function convertPdf(buf: Buffer, filename: string, mode: ConverterM
     writeFileSync(`${process.env.CONVERTER_DEBUG_DIR}/converter-${Date.now()}.json`, JSON.stringify(parts, null, 1));
   }
   const result = chunks.length > 1 ? mergeChunks(parts) : parts[0];
+  if (mode === "kp") normalizeSystemBlocks(result.items);
+  const usage: ConverterUsage = { model: "", requests: 0, input: 0, output: 0, total: 0 };
+  for (const p of parts) {
+    if (!p.usage) continue;
+    usage.model = usage.model || p.usage.model;
+    usage.requests++;
+    usage.input += p.usage.input;
+    usage.output += p.usage.output;
+    usage.total += p.usage.total;
+  }
 
   const rows = toRows(result);
   const declaredTotal = n(result.declared_total);
@@ -319,5 +394,6 @@ export async function convertPdf(buf: Buffer, filename: string, mode: ConverterM
     declaredTotal,
     rows,
     warnings,
+    usage,
   };
 }

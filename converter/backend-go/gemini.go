@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -54,6 +55,12 @@ type gResponse struct {
 		Message string `json:"message"`
 		Status  string `json:"status"`
 	} `json:"error"`
+	UsageMetadata *struct {
+		PromptTokenCount     int `json:"promptTokenCount"`
+		CandidatesTokenCount int `json:"candidatesTokenCount"`
+		ThoughtsTokenCount   int `json:"thoughtsTokenCount"`
+		TotalTokenCount      int `json:"totalTokenCount"`
+	} `json:"usageMetadata"`
 }
 
 var httpClient = &http.Client{Timeout: 5 * time.Minute}
@@ -130,6 +137,17 @@ func parseSpecFromPDF(pdf []byte, mode string) (*SpecResult, error) {
 		var spec SpecResult
 		if err := json.Unmarshal([]byte(gr.Candidates[0].Content.Parts[0].Text), &spec); err != nil {
 			return nil, fmt.Errorf("разбор JSON спецификации: %w", err)
+		}
+		// сколько стоил запрос — в результат и в лог, чтобы цена документа была известна
+		if u := gr.UsageMetadata; u != nil {
+			spec.Usage = &Usage{
+				Model:  geminiModel(mode),
+				Input:  u.PromptTokenCount,
+				Output: u.CandidatesTokenCount + u.ThoughtsTokenCount,
+				Total:  u.TotalTokenCount,
+			}
+			log.Printf("gemini %s: вход %d, выход %d (в т.ч. размышления %d), строк %d",
+				geminiModel(mode), u.PromptTokenCount, u.CandidatesTokenCount+u.ThoughtsTokenCount, u.ThoughtsTokenCount, len(spec.Items))
 		}
 		return &spec, nil
 	}

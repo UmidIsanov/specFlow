@@ -157,6 +157,14 @@ type SpecItem struct {
 	Total     *float64 `json:"total,omitempty"`
 }
 
+// Usage — токены одного запроса к Gemini: по ним считается стоимость документа.
+type Usage struct {
+	Model  string `json:"model"`
+	Input  int    `json:"input"`
+	Output int    `json:"output"`
+	Total  int    `json:"total"`
+}
+
 type SpecResult struct {
 	DocNumber     string     `json:"doc_number"`
 	ObjectName    string     `json:"object_name"`
@@ -164,6 +172,7 @@ type SpecResult struct {
 	Supplier      string     `json:"supplier,omitempty"`
 	Currency      string     `json:"currency,omitempty"`
 	DeclaredTotal *float64   `json:"declared_total,omitempty"`
+	Usage         *Usage     `json:"usage,omitempty"`
 	Items         []SpecItem `json:"items"`
 }
 
@@ -176,6 +185,7 @@ type FileResult struct {
 	Supplier      string     `json:"supplier,omitempty"`
 	Currency      string     `json:"currency,omitempty"`
 	DeclaredTotal *float64   `json:"declared_total,omitempty"`
+	Usage         *Usage     `json:"usage,omitempty"`
 	Items         []SpecItem `json:"items"`
 	Error         *string    `json:"error"`
 }

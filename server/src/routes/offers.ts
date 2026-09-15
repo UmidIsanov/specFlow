@@ -246,6 +246,7 @@ offersRouter.post(
     let detectedCurrency = "";
     let detectedNumber = "";
     let warnings: string[] = [];
+    let usage: unknown = undefined;
 
     const table = await parsePdfTable(req.file.buffer);
     if (table.rows.length) {
@@ -260,6 +261,7 @@ offersRouter.post(
       detectedCurrency = converted.currency;
       detectedNumber = converted.docNumber;
       warnings = converted.warnings;
+      usage = converted.usage;
     }
 
     let supplierId = typeof req.body.supplierId === "string" ? req.body.supplierId : "";
@@ -302,7 +304,7 @@ offersRouter.post(
       },
     });
     const full = await analyzeOffer(offer.id);
-    res.status(201).json({ ...full, source, warnings });
+    res.status(201).json({ ...full, source, warnings, usage });
   })
 );
 
