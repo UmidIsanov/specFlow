@@ -5,6 +5,7 @@ import { prisma } from "../db.js";
 import { ah, HttpError } from "../lib/http.js";
 import { parseSpecWorkbook, inspectWorkbook } from "../lib/xlsx.js";
 import { parsePdfTable } from "../lib/pdfTable.js";
+import { convertPdf, converterStatus } from "../lib/converter.js";
 
 export const specRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
@@ -114,27 +115,46 @@ specRouter.post(
   })
 );
 
-/** Импорт заявки или спецификации напрямую из PDF с текстовым слоем. */
+/** Конвертер сканов: доступен ли и настроен ли ключ — чтобы интерфейс честно сказал заранее. */
+specRouter.get(
+  "/converter/status",
+  ah(async (_req, res) => {
+    res.json(await converterStatus());
+  })
+);
+
+/**
+ * Импорт заявки или спецификации из PDF.
+ * Текстовый слой разбираем сами по сетке таблицы; скан отправляем в конвертер (Gemini).
+ */
 specRouter.post(
   "/projects/:projectId/spec/import-pdf",
   upload.single("file"),
   ah(async (req, res) => {
     if (!req.file) throw new HttpError(400, "Файл не передан");
-    const table = await parsePdfTable(req.file.buffer);
-    if (!table.rows.length) {
-      throw new HttpError(
-        422,
-        "В PDF не найдена таблица с текстовым слоем. Скан нужно сначала прогнать через pdf-spec-converter."
-      );
-    }
-
     const projectId = req.params.projectId;
     const fallbackSystem =
       typeof req.body.system === "string" && req.body.system ? req.body.system : "ПС";
+
+    let rows;
+    let source: "text" | "converter";
+    let pages: number | undefined;
+    const table = await parsePdfTable(req.file.buffer);
+    if (table.rows.length) {
+      rows = table.rows;
+      source = "text";
+      pages = table.pages;
+    } else {
+      const converted = await convertPdf(req.file.buffer, req.file.originalname, "spec");
+      if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу спецификации");
+      rows = converted.rows;
+      source = "converter";
+    }
+
     if (req.body.replace === "true") await prisma.specItem.deleteMany({ where: { projectId } });
 
     await prisma.specItem.createMany({
-      data: table.rows.map((r) => ({
+      data: rows.map((r) => ({
         projectId,
         system: r.system ?? fallbackSystem,
         pos: r.pos,
@@ -155,10 +175,12 @@ specRouter.post(
     });
 
     res.status(201).json({
-      created: table.rows.length,
-      pages: table.pages,
-      columns: table.columns.filter((c) => c.field).map((c) => ({ field: c.field, title: c.title })),
-      preview: table.rows.slice(0, 5),
+      created: rows.length,
+      source,
+      pages,
+      columns: source === "text" ? table.columns.filter((c) => c.field).map((c) => ({ field: c.field, title: c.title })) : undefined,
+      buildings: [...new Set(rows.map((r) => r.building).filter(Boolean))],
+      preview: rows.slice(0, 5),
     });
   })
 );

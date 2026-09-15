@@ -67,6 +67,67 @@ const specSchema = `{
   "required": ["doc_number", "items"]
 }`
 
+// --- Режим КП: коммерческое предложение поставщика ---
+// Строки КП укрупнённые: одна на несколько приборов, с перечнем тэгов внутри наименования
+// и ссылкой на опросный лист. Цену и сумму переписываем как есть.
+const kpSystemPrompt = `Ты — инженерный ассистент отдела закупок. Извлеки все строки из коммерческого
+предложения (спецификации к контракту) поставщика и сгруппируй их согласно структуре JSON.
+
+Правила:
+- Одна строка таблицы — один элемент "items". Не объединяй и не разбивай строки.
+- В "name" переписывай наименование ПОЛНОСТЬЮ, включая перечни теговых номеров
+  (например «401200-BIAS(F)-9001 ... 401200-BIAS(F)-9009»), номера писем и даты —
+  по ним потом идёт сверка с заявкой. Русский и английский варианты названия — оба в "name".
+- "datasheet" — номер опросного листа / документа, на который ссылается строка
+  (вида MOF3-UN-401200-INS-DAT-9006). Если написано «см. ОЛ ...» — бери номер после.
+  Если в ячейке ещё и характеристики — их в "note".
+- "section" — раздел или система, под которыми стоит строка (например «Hardware»,
+  «Software», «Cabinet», «Система 2»). Если таблица разбита на повторяющиеся блоки
+  (несколько одинаковых систем), нумеруй блоки: «Система 1 · Hardware», «Система 2 · Hardware».
+- ЧИСЛА (количество, цена, сумма) переписывай ПРЕДЕЛЬНО ТОЧНО, ровно как в документе,
+  без округления. Разделитель тысяч убирай, десятичную запятую заменяй на точку.
+- Пропускай шапку таблицы, строку «ИТОГО» и условия поставки после таблицы.
+- Не придумывай данных, которых нет в документе.
+- В "doc_number" — номер и дата спецификации/КП, в "supplier" — продавец из подписи,
+  в "currency" — валюта таблицы (RUB, USD, UZS, EUR).`
+
+const kpSchema = `{
+  "type": "OBJECT",
+  "properties": {
+    "doc_number": {"type": "STRING", "description": "Номер и дата КП / спецификации к контракту"},
+    "supplier": {"type": "STRING", "description": "Продавец / поставщик"},
+    "currency": {"type": "STRING", "description": "Валюта: RUB, USD, UZS, EUR"},
+    "items": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "properties": {
+          "section": {"type": "STRING", "description": "Раздел или блок системы, под которым стоит строка"},
+          "pos": {"type": "STRING", "description": "№ п/п"},
+          "name": {"type": "STRING", "description": "Наименование полностью, с перечнями тэгов"},
+          "type_code": {"type": "STRING", "description": "Тип, марка, артикул, если выделены отдельной колонкой"},
+          "datasheet": {"type": "STRING", "description": "Номер опросного листа / документа-основания"},
+          "unit": {"type": "STRING", "description": "Единица измерения"},
+          "quantity": {"type": "NUMBER", "description": "Количество"},
+          "price": {"type": "NUMBER", "description": "Цена за единицу"},
+          "total": {"type": "NUMBER", "description": "Сумма по строке"},
+          "note": {"type": "STRING", "description": "Характеристики и примечания"}
+        },
+        "required": ["pos", "name", "quantity"]
+      }
+    }
+  },
+  "required": ["items"]
+}`
+
+// promptAndSchema выбирает инструкцию и схему под тип документа.
+func promptAndSchema(mode string) (string, string) {
+	if mode == "kp" {
+		return kpSystemPrompt, kpSchema
+	}
+	return systemPrompt, specSchema
+}
+
 // --- Структуры данных ---
 type SpecItem struct {
 	Section     string   `json:"section"`
@@ -79,20 +140,29 @@ type SpecItem struct {
 	Quantity    *float64 `json:"quantity"`
 	WeightKg    *float64 `json:"weight_kg"`
 	Note        string   `json:"note"`
+	// поля КП
+	Datasheet string   `json:"datasheet,omitempty"`
+	Price     *float64 `json:"price,omitempty"`
+	Total     *float64 `json:"total,omitempty"`
 }
 
 type SpecResult struct {
 	DocNumber  string     `json:"doc_number"`
 	ObjectName string     `json:"object_name"`
 	SystemName string     `json:"system_name"`
+	Supplier   string     `json:"supplier,omitempty"`
+	Currency   string     `json:"currency,omitempty"`
 	Items      []SpecItem `json:"items"`
 }
 
 type FileResult struct {
 	Filename   string     `json:"filename"`
+	Mode       string     `json:"mode"`
 	DocNumber  string     `json:"doc_number"`
 	ObjectName string     `json:"object_name"`
 	SystemName string     `json:"system_name"`
+	Supplier   string     `json:"supplier,omitempty"`
+	Currency   string     `json:"currency,omitempty"`
 	Items      []SpecItem `json:"items"`
 	Error      *string    `json:"error"`
 }

@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PUBLIC_API } from "@/lib/api";
 import type { WorkbookInfo } from "@/lib/types";
 
 type Field = { name: string; label: string; options?: { value: string; label: string }[] };
 
-type Result = { created?: number; sheet?: string; pages?: number; columns?: unknown[]; buildings?: string[] };
+type Result = { created?: number; sheet?: string; pages?: number; columns?: unknown[]; buildings?: string[]; source?: "text" | "converter" };
+type ConverterStatus = { available: boolean; keyConfigured: boolean };
 
 const isPdf = (file: File) => /\.pdf$/i.test(file.name);
 const isSheet = (file: File) => /\.(xlsx|xls|csv)$/i.test(file.name);
@@ -53,6 +54,16 @@ export default function UploadForm({
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [converter, setConverter] = useState<ConverterStatus | null>(null);
+
+  // сканы читает отдельный сервис — заранее показываем, подключён ли он
+  useEffect(() => {
+    if (!pdfAction) return;
+    fetch(`${PUBLIC_API}/api/converter/status`)
+      .then((r) => r.json())
+      .then(setConverter)
+      .catch(() => setConverter({ available: false, keyConfigured: false }));
+  }, [pdfAction]);
 
   const accept = pdfAction ? ".xlsx,.xls,.csv,.pdf" : ".xlsx,.xls,.csv";
 
@@ -249,9 +260,25 @@ export default function UploadForm({
           disabled={busy || scanning || !file || !!error}
           className="ml-auto rounded-lg bg-brand-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
         >
-          {busy ? "Обработка…" : submitLabel}
+          {busy ? (file && isPdf(file) ? "Распознаю…" : "Обработка…") : submitLabel}
         </button>
       </div>
+      {busy && file && isPdf(file) ? (
+        <p className="mt-2 text-xs text-ink-400">
+          PDF с текстом читается за секунды. Скан уходит в конвертер — это может занять до пары минут.
+        </p>
+      ) : null}
+      {pdfAction && converter ? (
+        <p className="mt-2 text-xs text-ink-400">
+          {converter.available && converter.keyConfigured ? (
+            <><span className="text-emerald-600">●</span> Конвертер сканов подключён — можно загружать и сканы</>
+          ) : converter.available ? (
+            <><span className="text-amber-600">●</span> Конвертер запущен, но без ключа Gemini — сканы не распознаются</>
+          ) : (
+            <><span className="text-ink-400">●</span> Конвертер сканов не запущен — читаются только PDF с текстовым слоем</>
+          )}
+        </p>
+      ) : null}
 
       {result ? (
         <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
@@ -260,10 +287,11 @@ export default function UploadForm({
               Загружено строк: <b>{result.created}</b>
               {result.sheet ? ` · лист «${result.sheet}»` : ""}
               {result.pages ? ` · страниц ${result.pages}` : ""}
+              {result.source === "converter" ? " · скан распознан конвертером" : ""}
               {result.buildings?.length ? ` · здания: ${result.buildings.join(", ")}` : ""}
             </>
           ) : (
-            "Файл обработан, технический анализ выполнен"
+            <>Файл обработан, технический анализ выполнен{result.source === "converter" ? " · скан распознан конвертером" : ""}</>
           )}
         </div>
       ) : null}

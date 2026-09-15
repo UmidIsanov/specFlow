@@ -116,3 +116,12 @@ export async function extractPdf(buf: Buffer): Promise<PdfDoc> {
 
   return { pages: doc.numPages, lines, columnEdges, rowEdges };
 }
+
+const TEXT_LAYER_MIN_CHARS = 200;
+
+/** Есть ли в PDF текстовый слой — сканы отдаём конвертеру, остальное разбираем сами. */
+export function hasTextLayer(doc: PdfDoc): boolean {
+  let chars = 0;
+  for (const l of doc.lines) for (const c of l.cells) chars += c.text.length;
+  return chars >= TEXT_LAYER_MIN_CHARS;
+}

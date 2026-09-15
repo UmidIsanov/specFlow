@@ -14,7 +14,7 @@ import (
 // --- Тела запроса/ответа Gemini REST API ---
 
 type gPart struct {
-	Text       string      `json:"text,omitempty"`
+	Text       string       `json:"text,omitempty"`
 	InlineData *gInlineData `json:"inline_data,omitempty"`
 }
 
@@ -34,9 +34,9 @@ type gGenConfig struct {
 }
 
 type gRequest struct {
-	Contents          []gContent  `json:"contents"`
-	SystemInstruction *gContent   `json:"system_instruction,omitempty"`
-	GenerationConfig  gGenConfig  `json:"generationConfig"`
+	Contents          []gContent `json:"contents"`
+	SystemInstruction *gContent  `json:"system_instruction,omitempty"`
+	GenerationConfig  gGenConfig `json:"generationConfig"`
 }
 
 type gResponse struct {
@@ -56,25 +56,31 @@ type gResponse struct {
 
 var httpClient = &http.Client{Timeout: 5 * time.Minute}
 
-// parseSpecFromPDF отправляет PDF напрямую в Gemini и возвращает разобранную спецификацию.
+// parseSpecFromPDF отправляет PDF напрямую в Gemini и возвращает разобранную таблицу.
+// mode: "" / "spec" — спецификация ГОСТ, "kp" — коммерческое предложение поставщика.
 // Повторяет запрос при временных ошибках (429/503) с нарастающей задержкой.
-func parseSpecFromPDF(pdf []byte) (*SpecResult, error) {
+func parseSpecFromPDF(pdf []byte, mode string) (*SpecResult, error) {
 	apiKey := getAPIKey()
 	if apiKey == "" {
 		return nil, fmt.Errorf("не найден GEMINI_API_KEY")
+	}
+	prompt, schema := promptAndSchema(mode)
+	userText := "Извлеки спецификацию оборудования, изделий и материалов из этого чертежа."
+	if mode == "kp" {
+		userText = "Извлеки все строки таблицы из этого коммерческого предложения."
 	}
 
 	reqBody := gRequest{
 		Contents: []gContent{{
 			Parts: []gPart{
 				{InlineData: &gInlineData{MimeType: "application/pdf", Data: base64.StdEncoding.EncodeToString(pdf)}},
-				{Text: "Извлеки спецификацию оборудования, изделий и материалов из этого чертежа."},
+				{Text: userText},
 			},
 		}},
-		SystemInstruction: &gContent{Parts: []gPart{{Text: systemPrompt}}},
+		SystemInstruction: &gContent{Parts: []gPart{{Text: prompt}}},
 		GenerationConfig: gGenConfig{
 			ResponseMimeType: "application/json",
-			ResponseSchema:   json.RawMessage(specSchema),
+			ResponseSchema:   json.RawMessage(schema),
 			Temperature:      0,
 		},
 	}

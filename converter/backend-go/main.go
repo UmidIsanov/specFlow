@@ -43,7 +43,7 @@ func getAPIKey() string {
 
 // --- Хранилище фоновых задач ---
 type Job struct {
-	Status string      `json:"status"`           // pending | done
+	Status string      `json:"status"` // pending | done
 	Result *FileResult `json:"result,omitempty"`
 }
 
@@ -75,9 +75,9 @@ func takeJob(id string) (*Job, bool) {
 }
 
 // --- Обработка одного файла в фоне ---
-func processFile(id, filename string, raw []byte) {
-	entry := &FileResult{Filename: filename, Items: []SpecItem{}}
-	spec, err := parseSpecFromPDF(raw)
+func processFile(id, filename, mode string, raw []byte) {
+	entry := &FileResult{Filename: filename, Mode: mode, Items: []SpecItem{}}
+	spec, err := parseSpecFromPDF(raw, mode)
 	if err != nil {
 		msg := err.Error()
 		entry.Error = &msg
@@ -87,6 +87,8 @@ func processFile(id, filename string, raw []byte) {
 	entry.DocNumber = spec.DocNumber
 	entry.ObjectName = spec.ObjectName
 	entry.SystemName = spec.SystemName
+	entry.Supplier = spec.Supplier
+	entry.Currency = spec.Currency
 	if spec.Items != nil {
 		entry.Items = spec.Items
 	}
@@ -136,9 +138,15 @@ func handleConvert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// mode=kp — коммерческое предложение; по умолчанию — спецификация ГОСТ
+	mode := "spec"
+	if r.FormValue("mode") == "kp" {
+		mode = "kp"
+	}
+
 	id := newJobID()
 	setJob(id, &Job{Status: "pending"})
-	go processFile(id, fh.Filename, raw)
+	go processFile(id, fh.Filename, mode, raw)
 	writeJSON(w, 200, map[string]string{"job_id": id})
 }
 

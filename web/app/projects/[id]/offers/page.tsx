@@ -20,11 +20,19 @@ export default async function OffersPage({ params }: { params: Promise<{ id: str
       <div className="space-y-2">
         <UploadForm
           action={`/api/projects/${id}/offers/import`}
+          pdfAction={`/api/projects/${id}/offers/import-pdf`}
           title="Загрузить КП поставщика"
-          hint="Excel от поставщика. Позиции сразу сопоставляются со спецификацией: совпадение, аналог или отсутствие."
+          hint="Excel или PDF от поставщика — в том числе скан. Позиции сразу сопоставляются со спецификацией, а если в них есть тэги — сверяются с заявкой."
           submitLabel="Загрузить и проанализировать"
           fields={[
-            { name: "supplierId", label: "Поставщик", options: suppliers.map((s) => ({ value: s.id, label: s.name })) },
+            {
+              name: "supplierId",
+              label: "Поставщик",
+              options: [
+                { value: "", label: "Поставщик: взять из документа" },
+                ...suppliers.map((s) => ({ value: s.id, label: s.name })),
+              ],
+            },
             { name: "number", label: "№ КП" },
           ]}
         />

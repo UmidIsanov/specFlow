@@ -5,7 +5,9 @@ import { prisma } from "../db.js";
 import { ah, HttpError } from "../lib/http.js";
 import { parseSpecWorkbook } from "../lib/xlsx.js";
 import { matchOfferItem, normalizeArticle, normalizeKey, type Candidate } from "../lib/match.js";
-import { expandTagList, findTagsInText, tagKey } from "../lib/tags.js";
+import { expandTagList, findTagsInText } from "../lib/tags.js";
+import { parsePdfTable } from "../lib/pdfTable.js";
+import { convertPdf } from "../lib/converter.js";
 
 export const offersRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
@@ -192,7 +194,7 @@ offersRouter.post(
   ah(async (req, res) => {
     if (!req.file) throw new HttpError(400, "Файл не передан");
     const supplierId = String(req.body.supplierId ?? "");
-    if (!supplierId) throw new HttpError(400, "Не указан поставщик");
+    if (!supplierId) throw new HttpError(400, "Выберите поставщика — из Excel он не определяется");
 
     const sheet = typeof req.body.sheet === "string" && req.body.sheet ? req.body.sheet : undefined;
     const { rows, sheets, sheet: usedSheet } = parseSpecWorkbook(req.file.buffer, sheet);
@@ -224,6 +226,76 @@ offersRouter.post(
       },
     });
     res.status(201).json(await analyzeOffer(offer.id));
+  })
+);
+
+/**
+ * Импорт КП из PDF: текстовый слой — по сетке таблицы, скан — через конвертер в режиме «КП».
+ * Тэги вытаскиваются из наименования, поставщик и валюта — из документа, если не заданы.
+ */
+offersRouter.post(
+  "/projects/:projectId/offers/import-pdf",
+  upload.single("file"),
+  ah(async (req, res) => {
+    if (!req.file) throw new HttpError(400, "Файл не передан");
+    const projectId = req.params.projectId;
+
+    let rows;
+    let source: "text" | "converter";
+    let detectedSupplier = "";
+    let detectedCurrency = "";
+    let detectedNumber = "";
+
+    const table = await parsePdfTable(req.file.buffer);
+    if (table.rows.length) {
+      rows = table.rows;
+      source = "text";
+    } else {
+      const converted = await convertPdf(req.file.buffer, req.file.originalname, "kp");
+      if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу КП");
+      rows = converted.rows;
+      source = "converter";
+      detectedSupplier = converted.supplier;
+      detectedCurrency = converted.currency;
+      detectedNumber = converted.docNumber;
+    }
+
+    let supplierId = typeof req.body.supplierId === "string" ? req.body.supplierId : "";
+    if (!supplierId) {
+      if (!detectedSupplier) throw new HttpError(400, "Не указан поставщик, и в документе он не распознан");
+      const existing = await prisma.supplier.findFirst({ where: { name: detectedSupplier } });
+      supplierId = existing?.id ?? (await prisma.supplier.create({ data: { name: detectedSupplier } })).id;
+    }
+
+    const offer = await prisma.offer.create({
+      data: {
+        projectId,
+        supplierId,
+        number: req.body.number || detectedNumber || undefined,
+        currency: req.body.currency || detectedCurrency || "UZS",
+        items: {
+          create: rows.map((r) => {
+            // в текстовом PDF тэг может стоять отдельной колонкой, в скане — только внутри наименования
+            const tags = r.tag ? expandTagList([r.tag]) : findTagsInText(r.name);
+            return {
+              rawPos: r.pos,
+              rawName: r.name,
+              article: r.article,
+              code: r.code,
+              datasheet: r.datasheet,
+              section: r.section,
+              tagsJson: tags.length ? JSON.stringify(tags) : undefined,
+              manufacturer: r.manufacturer,
+              unit: r.unit ?? "шт",
+              qty: r.qty ?? 0,
+              price: r.price ?? 0,
+            };
+          }),
+        },
+      },
+    });
+    const full = await analyzeOffer(offer.id);
+    res.status(201).json({ ...full, source });
   })
 );
 
