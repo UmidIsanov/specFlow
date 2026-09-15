@@ -7,7 +7,15 @@ import type { WorkbookInfo } from "@/lib/types";
 
 type Field = { name: string; label: string; options?: { value: string; label: string }[] };
 
-type Result = { created?: number; sheet?: string; pages?: number; columns?: unknown[]; buildings?: string[]; source?: "text" | "converter" };
+type Result = {
+  created?: number;
+  sheet?: string;
+  pages?: number;
+  columns?: unknown[];
+  buildings?: string[];
+  source?: "text" | "converter";
+  warnings?: string[];
+};
 type ConverterStatus = { available: boolean; keyConfigured: boolean };
 
 const isPdf = (file: File) => /\.pdf$/i.test(file.name);
@@ -293,6 +301,16 @@ export default function UploadForm({
           ) : (
             <>Файл обработан, технический анализ выполнен{result.source === "converter" ? " · скан распознан конвертером" : ""}</>
           )}
+        </div>
+      ) : null}
+      {result?.warnings?.length ? (
+        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <div className="font-medium">Проверьте глазами — распознавание не гарантирует точность:</div>
+          <ul className="mt-1 list-disc pl-5">
+            {result.warnings.map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
         </div>
       ) : null}
       {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}

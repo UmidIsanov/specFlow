@@ -31,6 +31,8 @@ type gGenConfig struct {
 	ResponseMimeType string          `json:"responseMimeType"`
 	ResponseSchema   json.RawMessage `json:"responseSchema"`
 	Temperature      float64         `json:"temperature"`
+	// без явного лимита длинная таблица обрезается на полуслове — JSON не парсится
+	MaxOutputTokens int `json:"maxOutputTokens"`
 }
 
 type gRequest struct {
@@ -82,6 +84,7 @@ func parseSpecFromPDF(pdf []byte, mode string) (*SpecResult, error) {
 			ResponseMimeType: "application/json",
 			ResponseSchema:   json.RawMessage(schema),
 			Temperature:      0,
+			MaxOutputTokens:  65536,
 		},
 	}
 	payload, err := json.Marshal(reqBody)
@@ -90,7 +93,7 @@ func parseSpecFromPDF(pdf []byte, mode string) (*SpecResult, error) {
 	}
 
 	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
-		geminiModel(), apiKey)
+		geminiModel(mode), apiKey)
 
 	maxRetries := 5
 	var lastErr error

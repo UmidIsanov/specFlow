@@ -10,7 +10,15 @@ import (
 )
 
 // --- Модель Gemini ---
-func geminiModel() string {
+// Чертежи ГОСТ читает flash. Для КП — pro: на сканах с плотными таблицами flash
+// нестабилен — с одного и того же куска возвращал то все строки, то одну.
+func geminiModel(mode string) string {
+	if mode == "kp" {
+		if m := os.Getenv("GEMINI_MODEL_KP"); m != "" {
+			return m
+		}
+		return "gemini-pro-latest"
+	}
 	if m := os.Getenv("GEMINI_MODEL"); m != "" {
 		return m
 	}
@@ -89,7 +97,9 @@ const kpSystemPrompt = `Ты — инженерный ассистент отд�
 - Пропускай шапку таблицы, строку «ИТОГО» и условия поставки после таблицы.
 - Не придумывай данных, которых нет в документе.
 - В "doc_number" — номер и дата спецификации/КП, в "supplier" — продавец из подписи,
-  в "currency" — валюта таблицы (RUB, USD, UZS, EUR).`
+  в "currency" — валюта таблицы (RUB, USD, UZS, EUR).
+- В "declared_total" — итоговая сумма из строки «ИТОГО» / «Total» под таблицей, как число.
+  Если её нет — не заполняй.`
 
 const kpSchema = `{
   "type": "OBJECT",
@@ -97,6 +107,7 @@ const kpSchema = `{
     "doc_number": {"type": "STRING", "description": "Номер и дата КП / спецификации к контракту"},
     "supplier": {"type": "STRING", "description": "Продавец / поставщик"},
     "currency": {"type": "STRING", "description": "Валюта: RUB, USD, UZS, EUR"},
+    "declared_total": {"type": "NUMBER", "description": "Итоговая сумма документа из строки ИТОГО"},
     "items": {
       "type": "ARRAY",
       "items": {
@@ -147,24 +158,26 @@ type SpecItem struct {
 }
 
 type SpecResult struct {
-	DocNumber  string     `json:"doc_number"`
-	ObjectName string     `json:"object_name"`
-	SystemName string     `json:"system_name"`
-	Supplier   string     `json:"supplier,omitempty"`
-	Currency   string     `json:"currency,omitempty"`
-	Items      []SpecItem `json:"items"`
+	DocNumber     string     `json:"doc_number"`
+	ObjectName    string     `json:"object_name"`
+	SystemName    string     `json:"system_name"`
+	Supplier      string     `json:"supplier,omitempty"`
+	Currency      string     `json:"currency,omitempty"`
+	DeclaredTotal *float64   `json:"declared_total,omitempty"`
+	Items         []SpecItem `json:"items"`
 }
 
 type FileResult struct {
-	Filename   string     `json:"filename"`
-	Mode       string     `json:"mode"`
-	DocNumber  string     `json:"doc_number"`
-	ObjectName string     `json:"object_name"`
-	SystemName string     `json:"system_name"`
-	Supplier   string     `json:"supplier,omitempty"`
-	Currency   string     `json:"currency,omitempty"`
-	Items      []SpecItem `json:"items"`
-	Error      *string    `json:"error"`
+	Filename      string     `json:"filename"`
+	Mode          string     `json:"mode"`
+	DocNumber     string     `json:"doc_number"`
+	ObjectName    string     `json:"object_name"`
+	SystemName    string     `json:"system_name"`
+	Supplier      string     `json:"supplier,omitempty"`
+	Currency      string     `json:"currency,omitempty"`
+	DeclaredTotal *float64   `json:"declared_total,omitempty"`
+	Items         []SpecItem `json:"items"`
+	Error         *string    `json:"error"`
 }
 
 // --- Колонки ---

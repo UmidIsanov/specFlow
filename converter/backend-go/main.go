@@ -89,6 +89,7 @@ func processFile(id, filename, mode string, raw []byte) {
 	entry.SystemName = spec.SystemName
 	entry.Supplier = spec.Supplier
 	entry.Currency = spec.Currency
+	entry.DeclaredTotal = spec.DeclaredTotal
 	if spec.Items != nil {
 		entry.Items = spec.Items
 	}

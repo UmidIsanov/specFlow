@@ -245,6 +245,7 @@ offersRouter.post(
     let detectedSupplier = "";
     let detectedCurrency = "";
     let detectedNumber = "";
+    let warnings: string[] = [];
 
     const table = await parsePdfTable(req.file.buffer);
     if (table.rows.length) {
@@ -258,13 +259,19 @@ offersRouter.post(
       detectedSupplier = converted.supplier;
       detectedCurrency = converted.currency;
       detectedNumber = converted.docNumber;
+      warnings = converted.warnings;
     }
 
     let supplierId = typeof req.body.supplierId === "string" ? req.body.supplierId : "";
     if (!supplierId) {
-      if (!detectedSupplier) throw new HttpError(400, "Не указан поставщик, и в документе он не распознан");
-      const existing = await prisma.supplier.findFirst({ where: { name: detectedSupplier } });
-      supplierId = existing?.id ?? (await prisma.supplier.create({ data: { name: detectedSupplier } })).id;
+      // распознавание стоит минут — результат не выбрасываем, поставщика можно переименовать потом
+      let name = detectedSupplier;
+      if (!name) {
+        name = detectedNumber ? `Не распознан — ${detectedNumber}` : `Не распознан — ${req.file.originalname}`;
+        warnings.push("Поставщик в документе не распознан — переименуйте его в списке поставщиков");
+      }
+      const existing = await prisma.supplier.findFirst({ where: { name } });
+      supplierId = existing?.id ?? (await prisma.supplier.create({ data: { name } })).id;
     }
 
     const offer = await prisma.offer.create({
@@ -295,7 +302,7 @@ offersRouter.post(
       },
     });
     const full = await analyzeOffer(offer.id);
-    res.status(201).json({ ...full, source });
+    res.status(201).json({ ...full, source, warnings });
   })
 );
 
