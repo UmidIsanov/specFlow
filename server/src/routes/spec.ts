@@ -6,6 +6,7 @@ import { ah, HttpError } from "../lib/http.js";
 import { parseSpecWorkbook, inspectWorkbook } from "../lib/xlsx.js";
 import { parsePdfTable } from "../lib/pdfTable.js";
 import { convertPdf, converterStatus } from "../lib/converter.js";
+import { createJob, getJob, runJob } from "../lib/jobs.js";
 
 export const specRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
@@ -123,8 +124,18 @@ specRouter.get(
   })
 );
 
+/** Состояние фоновой задачи импорта — интерфейс опрашивает, пока не done/error. */
+specRouter.get(
+  "/jobs/:id",
+  ah(async (req, res) => {
+    const job = getJob(req.params.id);
+    if (!job) throw new HttpError(404, "Задача не найдена");
+    res.json(job);
+  })
+);
+
 /**
- * Импорт заявки или спецификации из PDF.
+ * Импорт заявки или спецификации из PDF — фоновой задачей с прогрессом.
  * Текстовый слой разбираем сами по сетке таблицы; скан отправляем в конвертер (Gemini).
  */
 specRouter.post(
@@ -135,53 +146,62 @@ specRouter.post(
     const projectId = req.params.projectId;
     const fallbackSystem =
       typeof req.body.system === "string" && req.body.system ? req.body.system : "ПС";
+    const replace = req.body.replace === "true";
+    const { buffer, originalname } = req.file;
 
-    let rows;
-    let source: "text" | "converter";
-    let pages: number | undefined;
-    const table = await parsePdfTable(req.file.buffer);
-    if (table.rows.length) {
-      rows = table.rows;
-      source = "text";
-      pages = table.pages;
-    } else {
-      const converted = await convertPdf(req.file.buffer, req.file.originalname, "spec");
-      if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу спецификации");
-      rows = converted.rows;
-      source = "converter";
-    }
+    const job = createJob("Читаю PDF");
+    runJob(job, async (report) => {
+      let rows;
+      let source: "text" | "converter";
+      let pages: number | undefined;
+      let columns;
+      const table = await parsePdfTable(buffer);
+      if (table.rows.length) {
+        rows = table.rows;
+        source = "text";
+        pages = table.pages;
+        columns = table.columns.filter((c) => c.field).map((c) => ({ field: c.field, title: c.title }));
+      } else {
+        const converted = await convertPdf(buffer, originalname, "spec", report);
+        if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу спецификации");
+        rows = converted.rows;
+        source = "converter";
+      }
 
-    if (req.body.replace === "true") await prisma.specItem.deleteMany({ where: { projectId } });
+      report({ stage: "Сохраняю позиции в базу", done: 1, total: 1 });
+      if (replace) await prisma.specItem.deleteMany({ where: { projectId } });
+      await prisma.specItem.createMany({
+        data: rows.map((r) => ({
+          projectId,
+          system: r.system ?? fallbackSystem,
+          pos: r.pos,
+          name: r.name,
+          article: r.article,
+          code: r.code,
+          tag: r.tag,
+          datasheet: r.datasheet,
+          manufacturer: r.manufacturer,
+          unit: r.unit ?? "шт",
+          qtyPlan: r.qty ?? 0,
+          pricePlan: r.price,
+          note: r.note,
+          section: r.section,
+          building: r.building,
+          docRef: r.docRef,
+        })),
+      });
 
-    await prisma.specItem.createMany({
-      data: rows.map((r) => ({
-        projectId,
-        system: r.system ?? fallbackSystem,
-        pos: r.pos,
-        name: r.name,
-        article: r.article,
-        code: r.code,
-        tag: r.tag,
-        datasheet: r.datasheet,
-        manufacturer: r.manufacturer,
-        unit: r.unit ?? "шт",
-        qtyPlan: r.qty ?? 0,
-        pricePlan: r.price,
-        note: r.note,
-        section: r.section,
-        building: r.building,
-        docRef: r.docRef,
-      })),
+      return {
+        created: rows.length,
+        source,
+        pages,
+        columns,
+        buildings: [...new Set(rows.map((r) => r.building).filter(Boolean))],
+        preview: rows.slice(0, 5),
+      };
     });
 
-    res.status(201).json({
-      created: rows.length,
-      source,
-      pages,
-      columns: source === "text" ? table.columns.filter((c) => c.field).map((c) => ({ field: c.field, title: c.title })) : undefined,
-      buildings: [...new Set(rows.map((r) => r.building).filter(Boolean))],
-      preview: rows.slice(0, 5),
-    });
+    res.status(202).json({ jobId: job.id });
   })
 );
 

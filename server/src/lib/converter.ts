@@ -330,15 +330,23 @@ export function normalizeSystemBlocks(items: ConverterItem[]): void {
  * Отправляет PDF в конвертер и ждёт результат; длинные документы — по кускам.
  * Бросает понятную ошибку, если конвертер недоступен.
  */
-export async function convertPdf(buf: Buffer, filename: string, mode: ConverterMode): Promise<ConvertedDocument> {
+export type ProgressReport = (p: { stage: string; done: number; total: number }) => void;
+
+export async function convertPdf(
+  buf: Buffer,
+  filename: string,
+  mode: ConverterMode,
+  report: ProgressReport = () => {}
+): Promise<ConvertedDocument> {
   const cached = cachePath(buf, mode);
   if (existsSync(cached)) {
+    report({ stage: "Файл уже распознавали — беру из кэша", done: 1, total: 1 });
     const doc = JSON.parse(readFileSync(cached, "utf8")) as ConvertedDocument;
     doc.warnings = [...doc.warnings, "Взято из кэша распознавания — токены не тратились"];
     doc.usage = { ...doc.usage, requests: 0, input: 0, output: 0, total: 0 };
     return doc;
   }
-  const doc = await convertUncached(buf, filename, mode);
+  const doc = await convertUncached(buf, filename, mode, report);
   try {
     mkdirSync(CACHE_DIR, { recursive: true });
     writeFileSync(cached, JSON.stringify(doc));
@@ -348,9 +356,18 @@ export async function convertPdf(buf: Buffer, filename: string, mode: ConverterM
   return doc;
 }
 
-async function convertUncached(buf: Buffer, filename: string, mode: ConverterMode): Promise<ConvertedDocument> {
+async function convertUncached(
+  buf: Buffer,
+  filename: string,
+  mode: ConverterMode,
+  report: ProgressReport
+): Promise<ConvertedDocument> {
+  report({ stage: "Готовлю страницы для распознавания", done: 0, total: 0 });
   const { pages, chunks } = await splitPdf(buf, CHUNK_PAGES);
   const base = filename.replace(/\.pdf$/i, "");
+  let finished = 0;
+  const label = (n: number) => `${n} ${n === 1 ? "страница" : n < 5 ? "страницы" : "страниц"}`;
+  report({ stage: `Распознаю скан: ${label(pages)}, ${chunks.length === 1 ? "один запрос" : `${chunks.length} частей`}`, done: 0, total: chunks.length });
 
   // кусок: несколько попыток, затем постранично — там тоже с повтором
   const convertWithRetry = async (part: Buffer, name: string, pageCount: number): Promise<ConverterResult> => {
@@ -379,15 +396,26 @@ async function convertUncached(buf: Buffer, filename: string, mode: ConverterMod
       if (to - from < 1) throw err;
       return null;
     });
-    if (r && plausible(r, to - from + 1, mode)) return [r];
-    if (to - from < 1) return r ? [r] : [];
+    if (r && plausible(r, to - from + 1, mode)) {
+      finished++;
+      report({ stage: `Распознаю скан: часть ${finished} из ${chunks.length} готова`, done: finished, total: chunks.length });
+      return [r];
+    }
+    if (to - from < 1) {
+      finished++;
+      report({ stage: `Распознаю скан: часть ${finished} из ${chunks.length} готова`, done: finished, total: chunks.length });
+      return r ? [r] : [];
+    }
 
     // кусок так и не прошёл — постранично
+    report({ stage: `Страницы ${from}–${to} читаются плохо — разбираю по одной`, done: finished, total: chunks.length });
     const single = await splitPdf(chunks[i], 1);
     const out: ConverterResult[] = [];
     for (let j = 0; j < single.chunks.length; j++) {
       out.push(await convertWithRetry(single.chunks[j], `${base} (стр. ${from + j}).pdf`, 1));
     }
+    finished++;
+    report({ stage: `Распознаю скан: часть ${finished} из ${chunks.length} готова`, done: finished, total: chunks.length });
     return out;
   };
 
@@ -403,6 +431,7 @@ async function convertUncached(buf: Buffer, filename: string, mode: ConverterMod
     const { writeFileSync } = await import("node:fs");
     writeFileSync(`${process.env.CONVERTER_DEBUG_DIR}/converter-${Date.now()}.json`, JSON.stringify(parts, null, 1));
   }
+  report({ stage: "Собираю результат и проверяю", done: chunks.length, total: chunks.length });
   const result = chunks.length > 1 ? mergeChunks(parts) : parts[0];
   if (mode === "kp") normalizeSystemBlocks(result.items);
   const usage: ConverterUsage = { model: "", requests: 0, input: 0, output: 0, total: 0 };

@@ -48,3 +48,15 @@ body {
   outline: 2px solid var(--color-brand-500);
   outline-offset: -1px;
 }
+
+/* неопределённый прогресс: полоса бегает, пока сервер не сообщил, сколько всего шагов */
+@keyframes progress-slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+.progress-indeterminate {
+  animation: progress-slide 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-indeterminate { animation-duration: 3s; }
+}

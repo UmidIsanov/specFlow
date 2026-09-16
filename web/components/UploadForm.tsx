@@ -17,6 +17,11 @@ type Result = {
   warnings?: string[];
 };
 type ConverterStatus = { available: boolean; keyConfigured: boolean };
+type Progress = { stage: string; done: number; total: number; startedAt: number };
+type JobState = { status: "running" | "done" | "error"; progress: { stage: string; done: number; total: number }; startedAt: number; result?: Result; error?: string };
+
+const POLL_MS = 1000;
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const isPdf = (file: File) => /\.pdf$/i.test(file.name);
 const isSheet = (file: File) => /\.(xlsx|xls|csv)$/i.test(file.name);
@@ -63,6 +68,15 @@ export default function UploadForm({
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [converter, setConverter] = useState<ConverterStatus | null>(null);
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+
+  // секундомер рядом с прогрессом: человек видит, что процесс живой
+  useEffect(() => {
+    if (!progress) return;
+    const t = setInterval(() => setElapsed(Math.round((Date.now() - progress.startedAt) / 1000)), 500);
+    return () => clearInterval(t);
+  }, [progress]);
 
   // сканы читает отдельный сервис — заранее показываем, подключён ли он
   useEffect(() => {
@@ -130,10 +144,28 @@ export default function UploadForm({
     setBusy(true);
     setError(null);
     setResult(null);
+    const startedAt = Date.now();
+    if (isPdf(file)) setProgress({ stage: "Отправляю файл", done: 0, total: 0, startedAt });
     try {
       const res = await fetch(`${PUBLIC_API}${target}`, { method: "POST", body: fd });
-      const data = await res.json().catch(() => ({}));
+      let data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? `Ошибка ${res.status}`);
+
+      // длинный импорт идёт фоновой задачей — опрашиваем её и показываем этап
+      if (data.jobId) {
+        for (;;) {
+          await wait(POLL_MS);
+          const jr = await fetch(`${PUBLIC_API}/api/jobs/${data.jobId}`);
+          if (!jr.ok) throw new Error("Задача импорта потерялась — повторите");
+          const job: JobState = await jr.json();
+          setProgress({ ...job.progress, startedAt });
+          if (job.status === "error") throw new Error(job.error ?? "Ошибка импорта");
+          if (job.status === "done") {
+            data = job.result ?? {};
+            break;
+          }
+        }
+      }
       setResult(data);
       setFile(null);
       setBook(null);
@@ -145,6 +177,7 @@ export default function UploadForm({
       setError(err instanceof Error ? err.message : "Ошибка загрузки");
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   }
 
@@ -268,13 +301,43 @@ export default function UploadForm({
           disabled={busy || scanning || !file || !!error}
           className="ml-auto rounded-lg bg-brand-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
         >
-          {busy ? (file && isPdf(file) ? "Распознаю…" : "Обработка…") : submitLabel}
+          {busy ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              {progress ? "Идёт импорт" : "Обработка…"}
+            </span>
+          ) : (
+            submitLabel
+          )}
         </button>
       </div>
-      {busy && file && isPdf(file) ? (
-        <p className="mt-2 text-xs text-ink-400">
-          PDF с текстом читается за секунды. Скан уходит в конвертер — это может занять до пары минут.
-        </p>
+
+      {progress ? (
+        <div className="mt-3 rounded-lg border border-brand-500/30 bg-brand-50 p-3">
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="font-medium text-ink-900">{progress.stage}</span>
+            <span className="shrink-0 tabular text-ink-400">
+              {progress.total > 0 ? `${Math.round((progress.done / progress.total) * 100)} % · ` : ""}
+              {Math.floor(elapsed / 60) > 0 ? `${Math.floor(elapsed / 60)} мин ` : ""}
+              {elapsed % 60} с
+            </span>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white">
+            {progress.total > 0 ? (
+              <div
+                className="h-full rounded-full bg-brand-500 transition-[width] duration-500"
+                style={{ width: `${Math.max(4, (progress.done / progress.total) * 100)}%` }}
+              />
+            ) : (
+              <div className="progress-indeterminate h-full w-1/3 rounded-full bg-brand-500" />
+            )}
+          </div>
+          <p className="mt-2 text-xs text-ink-400">
+            {progress.total > 0
+              ? `Готово ${progress.done} из ${progress.total}. Скан читается по частям, каждая — около минуты. Страницу можно не закрывать, но и ждать у экрана не обязательно.`
+              : "PDF с текстом читается за секунды, скан — до нескольких минут."}
+          </p>
+        </div>
       ) : null}
       {pdfAction && converter ? (
         <p className="mt-2 text-xs text-ink-400">

@@ -8,6 +8,7 @@ import { matchOfferItem, normalizeArticle, normalizeKey, type Candidate } from "
 import { expandTagList, findTagsInText } from "../lib/tags.js";
 import { parsePdfTable } from "../lib/pdfTable.js";
 import { convertPdf } from "../lib/converter.js";
+import { createJob, runJob } from "../lib/jobs.js";
 
 export const offersRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
@@ -230,8 +231,9 @@ offersRouter.post(
 );
 
 /**
- * Импорт КП из PDF: текстовый слой — по сетке таблицы, скан — через конвертер в режиме «КП».
- * Тэги вытаскиваются из наименования, поставщик и валюта — из документа, если не заданы.
+ * Импорт КП из PDF — фоновой задачей с прогрессом: текстовый слой — по сетке таблицы,
+ * скан — через конвертер в режиме «КП». Тэги вытаскиваются из наименования,
+ * поставщик и валюта — из документа, если не заданы.
  */
 offersRouter.post(
   "/projects/:projectId/offers/import-pdf",
@@ -239,72 +241,82 @@ offersRouter.post(
   ah(async (req, res) => {
     if (!req.file) throw new HttpError(400, "Файл не передан");
     const projectId = req.params.projectId;
+    const { buffer, originalname } = req.file;
+    const requestedSupplierId = typeof req.body.supplierId === "string" ? req.body.supplierId : "";
+    const requestedNumber = typeof req.body.number === "string" ? req.body.number : "";
+    const requestedCurrency = typeof req.body.currency === "string" ? req.body.currency : "";
 
-    let rows;
-    let source: "text" | "converter";
-    let detectedSupplier = "";
-    let detectedCurrency = "";
-    let detectedNumber = "";
-    let warnings: string[] = [];
-    let usage: unknown = undefined;
+    const job = createJob("Читаю PDF");
+    runJob(job, async (report) => {
+      let rows;
+      let source: "text" | "converter";
+      let detectedSupplier = "";
+      let detectedCurrency = "";
+      let detectedNumber = "";
+      let warnings: string[] = [];
+      let usage: unknown = undefined;
 
-    const table = await parsePdfTable(req.file.buffer);
-    if (table.rows.length) {
-      rows = table.rows;
-      source = "text";
-    } else {
-      const converted = await convertPdf(req.file.buffer, req.file.originalname, "kp");
-      if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу КП");
-      rows = converted.rows;
-      source = "converter";
-      detectedSupplier = converted.supplier;
-      detectedCurrency = converted.currency;
-      detectedNumber = converted.docNumber;
-      warnings = converted.warnings;
-      usage = converted.usage;
-    }
-
-    let supplierId = typeof req.body.supplierId === "string" ? req.body.supplierId : "";
-    if (!supplierId) {
-      // распознавание стоит минут — результат не выбрасываем, поставщика можно переименовать потом
-      let name = detectedSupplier;
-      if (!name) {
-        name = detectedNumber ? `Не распознан — ${detectedNumber}` : `Не распознан — ${req.file.originalname}`;
-        warnings.push("Поставщик в документе не распознан — переименуйте его в списке поставщиков");
+      const table = await parsePdfTable(buffer);
+      if (table.rows.length) {
+        rows = table.rows;
+        source = "text";
+      } else {
+        const converted = await convertPdf(buffer, originalname, "kp", report);
+        if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу КП");
+        rows = converted.rows;
+        source = "converter";
+        detectedSupplier = converted.supplier;
+        detectedCurrency = converted.currency;
+        detectedNumber = converted.docNumber;
+        warnings = converted.warnings;
+        usage = converted.usage;
       }
-      const existing = await prisma.supplier.findFirst({ where: { name } });
-      supplierId = existing?.id ?? (await prisma.supplier.create({ data: { name } })).id;
-    }
 
-    const offer = await prisma.offer.create({
-      data: {
-        projectId,
-        supplierId,
-        number: req.body.number || detectedNumber || undefined,
-        currency: req.body.currency || detectedCurrency || "UZS",
-        items: {
-          create: rows.map((r) => {
-            // в текстовом PDF тэг может стоять отдельной колонкой, в скане — только внутри наименования
-            const tags = r.tag ? expandTagList([r.tag]) : findTagsInText(r.name);
-            return {
-              rawPos: r.pos,
-              rawName: r.name,
-              article: r.article,
-              code: r.code,
-              datasheet: r.datasheet,
-              section: r.section,
-              tagsJson: tags.length ? JSON.stringify(tags) : undefined,
-              manufacturer: r.manufacturer,
-              unit: r.unit ?? "шт",
-              qty: r.qty ?? 0,
-              price: r.price ?? 0,
-            };
-          }),
+      report({ stage: "Сохраняю КП и сопоставляю со спецификацией", done: 1, total: 1 });
+      let supplierId = requestedSupplierId;
+      if (!supplierId) {
+        // распознавание стоит минут — результат не выбрасываем, поставщика можно переименовать потом
+        let name = detectedSupplier;
+        if (!name) {
+          name = detectedNumber ? `Не распознан — ${detectedNumber}` : `Не распознан — ${originalname}`;
+          warnings.push("Поставщик в документе не распознан — переименуйте его в списке поставщиков");
+        }
+        const existing = await prisma.supplier.findFirst({ where: { name } });
+        supplierId = existing?.id ?? (await prisma.supplier.create({ data: { name } })).id;
+      }
+
+      const offer = await prisma.offer.create({
+        data: {
+          projectId,
+          supplierId,
+          number: requestedNumber || detectedNumber || undefined,
+          currency: requestedCurrency || detectedCurrency || "UZS",
+          items: {
+            create: rows.map((r) => {
+              // в текстовом PDF тэг может стоять отдельной колонкой, в скане — только внутри наименования
+              const tags = r.tag ? expandTagList([r.tag]) : findTagsInText(r.name);
+              return {
+                rawPos: r.pos,
+                rawName: r.name,
+                article: r.article,
+                code: r.code,
+                datasheet: r.datasheet,
+                section: r.section,
+                tagsJson: tags.length ? JSON.stringify(tags) : undefined,
+                manufacturer: r.manufacturer,
+                unit: r.unit ?? "шт",
+                qty: r.qty ?? 0,
+                price: r.price ?? 0,
+              };
+            }),
+          },
         },
-      },
+      });
+      const full = await analyzeOffer(offer.id);
+      return { ...full, source, warnings, usage };
     });
-    const full = await analyzeOffer(offer.id);
-    res.status(201).json({ ...full, source, warnings, usage });
+
+    res.status(202).json({ jobId: job.id });
   })
 );
 
