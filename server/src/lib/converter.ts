@@ -158,6 +158,10 @@ function plausible(result: ConverterResult, pages: number, mode: ConverterMode):
   if (mode !== "kp") return rows > 0;
   if (rows === 0) return false;
   if (pages > 1 && rows < pages * 2) return false;
+  // в КП у строки с количеством есть цена; если её нет у половины — колонка не прочитана
+  const priced = result.items.filter((i) => (i.quantity ?? 0) > 0 && (i.price ?? 0) > 0).length;
+  const withQty = result.items.filter((i) => (i.quantity ?? 0) > 0).length;
+  if (withQty >= 3 && priced < withQty * 0.5) return false;
   // номера строк должны идти подряд
   const nums = result.items.map((i) => Number(i.pos)).filter((x) => Number.isInteger(x));
   if (nums.length >= 3) {
@@ -264,7 +268,7 @@ function mergeChunks(parts: ConverterResult[]): ConverterResult {
 
 const PART_OF: Array<[RegExp, string]> = [
   [/hardware|аппаратн/i, "Hardware"],
-  [/software|программн|рабочая станция|workstation/i, "Software"],
+  [/software|программн|рабочая станция|workstation|scada|\bПО\b|конфигурац/i, "Software"],
   [/cabinet|шкаф/i, "Cabinet"],
 ];
 
@@ -275,9 +279,14 @@ const PART_OF: Array<[RegExp, string]> = [
  */
 export function normalizeSystemBlocks(items: ConverterItem[]): void {
   const partOf = (section?: string) => PART_OF.find(([re]) => re.test(section ?? ""))?.[1];
-  const hardwareBlocks = items.filter((i) => partOf(i.section) === "Hardware").length;
-  const starts = items.filter((i, k) => partOf(i.section) === "Hardware" && partOf(items[k - 1]?.section) !== "Hardware").length;
-  if (hardwareBlocks < 2 || starts < 2) return;
+  // у одиночных страниц заголовков нет — блок узнаём и по повтору первой строки документа
+  const head = (items[0]?.name ?? "").slice(0, 30).toLowerCase();
+  const isStart = (item: ConverterItem, k: number) =>
+    k === 0 ||
+    (partOf(item.section) === "Hardware" && partOf(items[k - 1]?.section) !== "Hardware") ||
+    (head.length >= 10 && item.name.slice(0, 30).toLowerCase() === head && k > 0);
+  const starts = items.filter((i, k) => isStart(i, k)).length;
+  if (starts < 2) return;
 
   // после последнего шкафа идут общие позиции — HMI, услуги, доставка — без своего заголовка,
   // и модель приписывает их к шкафу; отсчитываем от последней настоящей позиции шкафа
@@ -295,10 +304,11 @@ export function normalizeSystemBlocks(items: ConverterItem[]): void {
       item.section = "Общее";
       return;
     }
-    const part = partOf(item.section);
-    if (part === "Hardware" && lastPart !== "Hardware") {
+    let part = partOf(item.section);
+    if (isStart(item, k)) {
       system++;
       inBlock = true;
+      part = "Hardware";
     }
     if (part) {
       item.section = `Система ${system} · ${part}`;
@@ -307,6 +317,9 @@ export function normalizeSystemBlocks(items: ConverterItem[]): void {
       // без раздела после блока: продолжение той же части или общие позиции в конце
       item.section = lastPart === "Cabinet" ? "Общее" : `Система ${system} · ${lastPart ?? "Hardware"}`;
       if (lastPart === "Cabinet") inBlock = false;
+    } else if (inBlock) {
+      // раздел назван как-то по-своему — это всё та же часть текущей системы
+      item.section = `Система ${system} · ${lastPart ?? "Hardware"}`;
     } else if (!inBlock && !item.section) {
       item.section = "Общее";
     }
