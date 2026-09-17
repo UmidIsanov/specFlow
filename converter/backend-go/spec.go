@@ -10,14 +10,15 @@ import (
 )
 
 // --- Модель Gemini ---
-// Чертежи ГОСТ читает flash. Для КП — pro: на сканах с плотными таблицами flash
-// нестабилен — с одного и того же куска возвращал то все строки, то одну.
+// Чертежи ГОСТ и КП читает flash: без раздумий он в разы дешевле pro, а срывы
+// (одна строка вместо всех) ловит проверка правдоподобия на сервере и переспрашивает.
+// GEMINI_MODEL_KP=gemini-pro-latest — если нужна максимальная точность за деньги.
 func geminiModel(mode string) string {
 	if mode == "kp" {
 		if m := os.Getenv("GEMINI_MODEL_KP"); m != "" {
 			return m
 		}
-		return "gemini-pro-latest"
+		return "gemini-3.6-flash"
 	}
 	if m := os.Getenv("GEMINI_MODEL"); m != "" {
 		return m

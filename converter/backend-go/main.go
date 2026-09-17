@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -75,9 +76,9 @@ func takeJob(id string) (*Job, bool) {
 }
 
 // --- Обработка одного файла в фоне ---
-func processFile(id, filename, mode string, raw []byte) {
+func processFile(id, filename, mode string, thinking int, raw []byte) {
 	entry := &FileResult{Filename: filename, Mode: mode, Items: []SpecItem{}}
-	spec, err := parseSpecFromPDF(raw, mode)
+	spec, err := parseSpecFromPDF(raw, mode, thinking)
 	if err != nil {
 		msg := err.Error()
 		entry.Error = &msg
@@ -146,9 +147,17 @@ func handleConvert(w http.ResponseWriter, r *http.Request) {
 		mode = "kp"
 	}
 
+	// thinking=N — бюджет размышлений для этого запроса (повтор после срыва делаем умнее)
+	thinking := -2
+	if v := r.FormValue("thinking"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			thinking = n
+		}
+	}
+
 	id := newJobID()
 	setJob(id, &Job{Status: "pending"})
-	go processFile(id, fh.Filename, mode, raw)
+	go processFile(id, fh.Filename, mode, thinking, raw)
 	writeJSON(w, 200, map[string]string{"job_id": id})
 }
 

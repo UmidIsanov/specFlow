@@ -6,6 +6,7 @@ import { ah, HttpError } from "../lib/http.js";
 import { parseSpecWorkbook, inspectWorkbook } from "../lib/xlsx.js";
 import { parsePdfTable } from "../lib/pdfTable.js";
 import { convertPdf, converterStatus } from "../lib/converter.js";
+import { localOcrAvailable } from "../lib/localOcr.js";
 import { createJob, getJob, runJob } from "../lib/jobs.js";
 
 export const specRouter = Router();
@@ -120,7 +121,8 @@ specRouter.post(
 specRouter.get(
   "/converter/status",
   ah(async (_req, res) => {
-    res.json(await converterStatus());
+    const local = localOcrAvailable();
+    res.json({ ...(await converterStatus()), recognizer: process.env.RECOGNIZER ?? "gemini", local: local.available });
   })
 );
 

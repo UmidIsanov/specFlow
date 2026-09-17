@@ -8,6 +8,7 @@ import { matchOfferItem, normalizeArticle, normalizeKey, type Candidate } from "
 import { expandTagList, findTagsInText } from "../lib/tags.js";
 import { parsePdfTable } from "../lib/pdfTable.js";
 import { convertPdf } from "../lib/converter.js";
+import { localOcrAvailable, recognizeLocally } from "../lib/localOcr.js";
 import { createJob, runJob } from "../lib/jobs.js";
 
 export const offersRouter = Router();
@@ -248,23 +249,41 @@ offersRouter.post(
 
     const job = createJob("Читаю PDF");
     runJob(job, async (report) => {
-      let rows;
-      let source: "text" | "converter";
+      const table = await parsePdfTable(buffer);
+      let rows: typeof table.rows | undefined;
+      let source: "text" | "converter" = "converter";
       let detectedSupplier = "";
       let detectedCurrency = "";
       let detectedNumber = "";
       let warnings: string[] = [];
       let usage: unknown = undefined;
 
-      const table = await parsePdfTable(buffer);
+      // RECOGNIZER: gemini (по умолчанию) | local (только macOS, бесплатно) | auto (сначала локально)
+      const recognizer = process.env.RECOGNIZER ?? "gemini";
+      let localTried = false;
       if (table.rows.length) {
         rows = table.rows;
         source = "text";
-      } else {
+      } else if (recognizer !== "gemini" && localOcrAvailable().available) {
+        localTried = true;
+        const local = await recognizeLocally(buffer, report);
+        // локальный результат годен, если найдена шапка и есть строки; расхождение суммы — лишь предупреждение
+        const good = local.rows.length >= 3 && !local.warnings.some((w) => /шапку/.test(w));
+        if (good || recognizer === "local") {
+          rows = local.rows;
+          source = "converter";
+          detectedSupplier = local.supplier;
+          detectedCurrency = local.currency;
+          detectedNumber = local.docNumber;
+          warnings = [...local.warnings, "Распознано локально (macOS Vision), без Gemini"];
+          usage = { model: "local-vision", requests: local.pages, input: 0, output: 0, total: 0 };
+        }
+      }
+      if (!rows) {
+        if (localTried) report({ stage: "Локальное распознавание неуверенное — отправляю в Gemini", done: 0, total: 0 });
         const converted = await convertPdf(buffer, originalname, "kp", report);
         if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу КП");
         rows = converted.rows;
-        source = "converter";
         detectedSupplier = converted.supplier;
         detectedCurrency = converted.currency;
         detectedNumber = converted.docNumber;

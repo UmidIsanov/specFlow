@@ -71,17 +71,30 @@ type gResponse struct {
 	} `json:"usageMetadata"`
 }
 
-var httpClient = &http.Client{Timeout: 5 * time.Minute}
+// Две минуты на попытку: нормальный ответ приходит за 20–60 с, дольше — значит, сервис буксует.
+var httpClient = &http.Client{Timeout: 2 * time.Minute}
+
+// thinkingConfigFor: явный бюджет из запроса (-2 — не задан, берём из окружения).
+func thinkingConfigFor(mode string, explicit int) *gThinking {
+	if explicit == -2 {
+		return thinkingConfig(mode)
+	}
+	if explicit < 0 {
+		return nil
+	}
+	return &gThinking{ThinkingBudget: explicit}
+}
 
 // thinkingConfig ограничивает бюджет размышлений: GEMINI_THINKING_BUDGET (spec) и
-// GEMINI_THINKING_BUDGET_KP. По умолчанию 2048 — достаточно, чтобы не сбиваться, но не платить
-// за 10–13 тысяч токенов раздумий на каждый кусок. -1 — без ограничения (как было).
+// GEMINI_THINKING_BUDGET_KP. Для КП по умолчанию 0: те же строки, а выходных токенов
+// в шесть раз меньше, чем с раздумьями. Для чертежей 2048. -1 — без ограничения.
 func thinkingConfig(mode string) *gThinking {
 	key := "GEMINI_THINKING_BUDGET"
+	budget := 2048
 	if mode == "kp" {
 		key = "GEMINI_THINKING_BUDGET_KP"
+		budget = 0
 	}
-	budget := 2048
 	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			budget = n
@@ -96,7 +109,7 @@ func thinkingConfig(mode string) *gThinking {
 // parseSpecFromPDF отправляет PDF напрямую в Gemini и возвращает разобранную таблицу.
 // mode: "" / "spec" — спецификация ГОСТ, "kp" — коммерческое предложение поставщика.
 // Повторяет запрос при временных ошибках (429/503) с нарастающей задержкой.
-func parseSpecFromPDF(pdf []byte, mode string) (*SpecResult, error) {
+func parseSpecFromPDF(pdf []byte, mode string, thinking int) (*SpecResult, error) {
 	apiKey := getAPIKey()
 	if apiKey == "" {
 		return nil, fmt.Errorf("не найден GEMINI_API_KEY")
@@ -120,7 +133,7 @@ func parseSpecFromPDF(pdf []byte, mode string) (*SpecResult, error) {
 			ResponseSchema:   json.RawMessage(schema),
 			Temperature:      0,
 			MaxOutputTokens:  65536,
-			ThinkingConfig:   thinkingConfig(mode),
+			ThinkingConfig:   thinkingConfigFor(mode, thinking),
 		},
 	}
 	payload, err := json.Marshal(reqBody)
@@ -131,13 +144,16 @@ func parseSpecFromPDF(pdf []byte, mode string) (*SpecResult, error) {
 	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
 		geminiModel(mode), apiKey)
 
-	maxRetries := 5
+	maxRetries := 3
 	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
+		started := time.Now()
+		log.Printf("gemini %s: запрос %d/%d, %d КБ", geminiModel(mode), attempt, maxRetries, len(payload)/1024)
 		resp, err := httpClient.Post(url, "application/json", bytes.NewReader(payload))
 		if err != nil {
 			lastErr = err
-			time.Sleep(time.Duration(1<<attempt) * time.Second)
+			log.Printf("gemini %s: сбой соединения через %s: %v", geminiModel(mode), time.Since(started).Round(time.Second), err)
+			time.Sleep(time.Duration(2<<attempt) * time.Second)
 			continue
 		}
 		body, _ := io.ReadAll(resp.Body)
@@ -145,7 +161,8 @@ func parseSpecFromPDF(pdf []byte, mode string) (*SpecResult, error) {
 
 		if resp.StatusCode == 429 || resp.StatusCode == 503 {
 			lastErr = fmt.Errorf("gemini %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
-			time.Sleep(time.Duration(1<<attempt) * time.Second)
+			log.Printf("gemini %s: %d через %s, повтор", geminiModel(mode), resp.StatusCode, time.Since(started).Round(time.Second))
+			time.Sleep(time.Duration(2<<attempt) * time.Second)
 			continue
 		}
 		if resp.StatusCode != 200 {

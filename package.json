@@ -6,7 +6,8 @@
     "dev": "concurrently -n api,web,converter -c blue,green,yellow \"npm run dev --prefix server\" \"npm run dev --prefix web\" \"npm run dev:converter\"",
     "dev:converter": "cd converter/backend-go && go build -o ../converter-go-dev . && cd .. && PORT=${CONVERTER_PORT:-8137} ./converter-go-dev",
     "build:converter": "cd converter/backend-go && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags='-s -w' -o ../converter-go .",
-    "install:all": "npm install && npm install --prefix server && npm install --prefix web"
+    "install:all": "npm install && npm install --prefix server && npm install --prefix web",
+    "build:ocr": "bash converter/ocr/build.sh"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

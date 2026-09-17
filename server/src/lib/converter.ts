@@ -143,10 +143,20 @@ function friendlyError(message: string): string {
   if (/prepayment credits|RESOURCE_EXHAUSTED|billing/i.test(message)) {
     return "Закончились средства на ключе Gemini — пополните баланс в Google AI Studio и повторите";
   }
+  if (/недоступен после|503|deadline|timeout|Client.Timeout/i.test(message)) {
+    return "Gemini сейчас не отвечает (перегружен или недоступен) — повторите через несколько минут";
+  }
   if (/API key not valid|API_KEY_INVALID|PERMISSION_DENIED/i.test(message)) {
     return "Ключ Gemini не принят — проверьте GEMINI_API_KEY в converter/.env";
   }
   return message;
+}
+
+/** Чем больше строк с числами — тем лучше результат; так выбираем лучший из попыток. */
+function score(r: ConverterResult | null): number {
+  if (!r) return -1;
+  const priced = r.items.filter((i) => (i.quantity ?? 0) > 0 && (i.price ?? 0) > 0).length;
+  return priced * 2 + r.items.length;
 }
 
 /**
@@ -173,12 +183,24 @@ function plausible(result: ConverterResult, pages: number, mode: ConverterMode):
 }
 
 /** Один запрос к конвертеру: отправить PDF, дождаться результата. */
-async function convertOne(buf: Buffer, filename: string, mode: ConverterMode): Promise<ConverterResult> {
+// Первый заход — без «размышлений» (в разы дешевле); если результат неправдоподобен —
+// повтор с бюджетом: дороже, но точнее. Токены считаем по всем попыткам.
+const RETRY_THINKING = 1024;
+type UsageSink = { requests: number; input: number; output: number; total: number; model: string };
+
+async function convertOne(
+  buf: Buffer,
+  filename: string,
+  mode: ConverterMode,
+  thinking?: number,
+  sink?: UsageSink
+): Promise<ConverterResult> {
   const base = converterUrl();
 
   const fd = new FormData();
   fd.append("files", new Blob([new Uint8Array(buf)], { type: "application/pdf" }), filename);
   fd.append("mode", mode);
+  if (thinking !== undefined) fd.append("thinking", String(thinking));
 
   let started: Response;
   try {
@@ -199,6 +221,13 @@ async function convertOne(buf: Buffer, filename: string, mode: ConverterMode): P
     const job = (await res.json()) as { status: string; result?: ConverterResult };
     if (job.status !== "done") continue;
     if (!job.result) throw new Error("Конвертер вернул пустой результат");
+    if (job.result.usage && sink) {
+      sink.requests++;
+      sink.input += job.result.usage.input;
+      sink.output += job.result.usage.output;
+      sink.total += job.result.usage.total;
+      sink.model = sink.model || job.result.usage.model;
+    }
     if (job.result.error) throw new Error(`Распознавание не удалось: ${friendlyError(job.result.error)}`);
     return job.result;
   }
@@ -369,22 +398,25 @@ async function convertUncached(
   const label = (n: number) => `${n} ${n === 1 ? "страница" : n < 5 ? "страницы" : "страниц"}`;
   report({ stage: `Распознаю скан: ${label(pages)}, ${chunks.length === 1 ? "один запрос" : `${chunks.length} частей`}`, done: 0, total: chunks.length });
 
-  // кусок: несколько попыток, затем постранично — там тоже с повтором
-  const convertWithRetry = async (part: Buffer, name: string, pageCount: number): Promise<ConverterResult> => {
-    let last: ConverterResult | null = null;
+  const usage: UsageSink = { requests: 0, input: 0, output: 0, total: 0, model: "" };
+
+  // кусок: сначала дёшево, потом с размышлениями; возвращаем лучший результат из попыток
+  const convertWithRetry = async (part: Buffer, name: string, pageCount: number): Promise<ConverterResult | null> => {
+    let best: ConverterResult | null = null;
     let lastErr: unknown = null;
-    for (let attempt = 1; attempt <= CHUNK_ATTEMPTS; attempt++) {
+    const budgets = [undefined, RETRY_THINKING];
+    for (const thinking of budgets) {
       try {
-        const r = await convertOne(part, name, mode);
+        const r = await convertOne(part, name, mode, thinking, usage);
+        if (score(r) > score(best)) best = r;
         if (plausible(r, pageCount, mode)) return r;
-        last = r;
       } catch (err) {
         lastErr = err;
         // деньги или ключ — повторять бессмысленно
         if (err instanceof Error && /Gemini|GEMINI_API_KEY/.test(err.message)) throw err;
       }
     }
-    if (last) return last;
+    if (best) return best;
     throw lastErr instanceof Error ? lastErr : new Error("Распознавание не удалось");
   };
 
@@ -392,31 +424,34 @@ async function convertUncached(
     const from = i * CHUNK_PAGES + 1;
     const to = Math.min(pages, (i + 1) * CHUNK_PAGES);
     const name = chunks.length > 1 ? `${base} (стр. ${from}-${to}).pdf` : filename;
-    const r = await convertWithRetry(chunks[i], name, to - from + 1).catch((err) => {
+    const whole = await convertWithRetry(chunks[i], name, to - from + 1).catch((err) => {
       if (to - from < 1) throw err;
       return null;
     });
-    if (r && plausible(r, to - from + 1, mode)) {
+    const done = () => {
       finished++;
       report({ stage: `Распознаю скан: часть ${finished} из ${chunks.length} готова`, done: finished, total: chunks.length });
-      return [r];
+    };
+    if (whole && plausible(whole, to - from + 1, mode)) {
+      done();
+      return [whole];
     }
     if (to - from < 1) {
-      finished++;
-      report({ stage: `Распознаю скан: часть ${finished} из ${chunks.length} готова`, done: finished, total: chunks.length });
-      return r ? [r] : [];
+      done();
+      return whole ? [whole] : [];
     }
 
-    // кусок так и не прошёл — постранично
+    // кусок так и не прошёл — постранично, но берём то, что лучше: постранично или целиком
     report({ stage: `Страницы ${from}–${to} читаются плохо — разбираю по одной`, done: finished, total: chunks.length });
     const single = await splitPdf(chunks[i], 1);
-    const out: ConverterResult[] = [];
+    const perPage: ConverterResult[] = [];
     for (let j = 0; j < single.chunks.length; j++) {
-      out.push(await convertWithRetry(single.chunks[j], `${base} (стр. ${from + j}).pdf`, 1));
+      const r = await convertWithRetry(single.chunks[j], `${base} (стр. ${from + j}).pdf`, 1).catch(() => null);
+      if (r) perPage.push(r);
     }
-    finished++;
-    report({ stage: `Распознаю скан: часть ${finished} из ${chunks.length} готова`, done: finished, total: chunks.length });
-    return out;
+    done();
+    const perPageScore = perPage.reduce((s, r) => s + score(r), 0);
+    return whole && score(whole) >= perPageScore ? [whole] : perPage;
   };
 
   // по несколько кусков разом: конвертер сам переживает 429 с паузой
@@ -434,15 +469,6 @@ async function convertUncached(
   report({ stage: "Собираю результат и проверяю", done: chunks.length, total: chunks.length });
   const result = chunks.length > 1 ? mergeChunks(parts) : parts[0];
   if (mode === "kp") normalizeSystemBlocks(result.items);
-  const usage: ConverterUsage = { model: "", requests: 0, input: 0, output: 0, total: 0 };
-  for (const p of parts) {
-    if (!p.usage) continue;
-    usage.model = usage.model || p.usage.model;
-    usage.requests++;
-    usage.input += p.usage.input;
-    usage.output += p.usage.output;
-    usage.total += p.usage.total;
-  }
 
   const rows = toRows(result);
   const declaredTotal = n(result.declared_total);
