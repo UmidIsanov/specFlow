@@ -1,0 +1,50 @@
+{
+  // Запуск SpecFlow из VS Code: Terminal → Run Task… → «SpecFlow: запустить всё»
+  // или Ctrl+Shift+B (Cmd+Shift+B на Mac) — это задача по умолчанию.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SpecFlow: запустить всё",
+      "dependsOn": ["API :4000", "Веб :3000", "Конвертер :8137"],
+      "dependsOrder": "parallel",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "API :4000",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/server" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "specflow", "reveal": "always" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Веб :3000",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/web" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "specflow", "reveal": "always" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Веб :3000 (production, экономит память)",
+      "type": "shell",
+      "command": "npm run build && npm start",
+      "options": { "cwd": "${workspaceFolder}/web" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "specflow", "reveal": "always" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Конвертер :8137",
+      "type": "shell",
+      "command": "npm run dev:converter",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "specflow", "reveal": "always" },
+      "problemMatcher": []
+    }
+  ]
+}

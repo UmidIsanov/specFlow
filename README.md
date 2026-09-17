@@ -140,6 +140,11 @@ npm run dev                          # api :4000 · web :3000 · converter :8137
 После распознавания КП сверяется сумма строк с итогом документа и подсвечиваются строки без цены.
 По отдельности: `npm run dev --prefix server`, `npm run dev --prefix web`, `npm run dev:converter`.
 
+**Из VS Code:** открыть папку `specflow`, нажать `Cmd+Shift+B` (Windows: `Ctrl+Shift+B`) — задача
+«SpecFlow: запустить всё» поднимет три сервиса в отдельных вкладках терминала. Остальные задачи —
+через Terminal → Run Task… Если машине не хватает памяти, вместо «Веб :3000» запускайте
+«Веб :3000 (production)» — он в разы легче dev-режима.
+
 **Сервер.** Конвертер деплоится из папки `converter/` этого репозитория — бинарник
 `converter/converter-go` собирается командой `npm run build:converter` (Linux/amd64) и коммитится,
 на сервере: `git pull && bash converter/start.sh`. Старый репозиторий `pdf-spec-converter`
