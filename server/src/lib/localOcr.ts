@@ -77,7 +77,8 @@ function findHeader(lines: OcrLine[]): { y: number; h: number; columns: Column[]
   // группируем по y и ищем полосу, где ≥3 слова похожи на заголовки колонок
   const sorted = [...lines].sort((a, b) => a.y - b.y);
   for (let i = 0; i < sorted.length; i++) {
-    const band = sorted.filter((l) => Math.abs(l.y - sorted[i].y) < Math.max(sorted[i].h, 0.006) * 1.2);
+    // шапка бывает в 2–3 строки и на двух языках — берём полосу в три высоты строки
+    const band = sorted.filter((l) => Math.abs(l.y - sorted[i].y) < Math.max(sorted[i].h, 0.006) * 3);
     const cols: Column[] = [];
     for (const l of band) {
       const t = l.text.trim();
@@ -164,8 +165,11 @@ function tableFromPage(page: OcrPage, columns: Column[] | null, headerY: number)
       current = null;
       continue;
     }
-    // новая строка — там, где в колонке № стоит число
-    const posWord = posCol ? band.find((b) => columnOf(b, cols).key === "pos" && INT.test(b.text.trim())) : undefined;
+    // новая строка — там, где в колонке № стоит число; без колонки № — число у левого края
+    const firstColX = Math.min(...cols.map((c) => c.x0));
+    const posWord = posCol
+      ? band.find((b) => columnOf(b, cols).key === "pos" && INT.test(b.text.trim()))
+      : band.find((b) => b.x < firstColX - 0.01 && /^\d{1,3}\.?$/.test(b.text.trim()));
     if (posWord) {
       current = { ...pending, pos: posWord.text.trim() };
       pending = {};

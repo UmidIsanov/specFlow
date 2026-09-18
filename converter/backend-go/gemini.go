@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -73,6 +74,8 @@ type gResponse struct {
 
 // Две минуты на попытку: нормальный ответ приходит за 20–60 с, дольше — значит, сервис буксует.
 var httpClient = &http.Client{Timeout: 2 * time.Minute}
+
+var retryDelayRe = regexp.MustCompile(`retryDelay"\s*:\s*"(\d+)`)
 
 // thinkingConfigFor: явный бюджет из запроса (-2 — не задан, берём из окружения).
 func thinkingConfigFor(mode string, explicit int) *gThinking {
@@ -144,7 +147,7 @@ func parseSpecFromPDF(pdf []byte, mode string, thinking int) (*SpecResult, error
 	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
 		geminiModel(mode), apiKey)
 
-	maxRetries := 3
+	maxRetries := 4
 	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		started := time.Now()
@@ -161,8 +164,15 @@ func parseSpecFromPDF(pdf []byte, mode string, thinking int) (*SpecResult, error
 
 		if resp.StatusCode == 429 || resp.StatusCode == 503 {
 			lastErr = fmt.Errorf("gemini %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
-			log.Printf("gemini %s: %d через %s, повтор", geminiModel(mode), resp.StatusCode, time.Since(started).Round(time.Second))
-			time.Sleep(time.Duration(2<<attempt) * time.Second)
+			// бесплатный тариф: Google сам говорит, сколько ждать («retryDelay»: «34s») — слушаемся
+			wait := time.Duration(2<<attempt) * time.Second
+			if m := retryDelayRe.FindSubmatch(body); m != nil {
+				if n, err := strconv.Atoi(string(m[1])); err == nil && n > 0 && n <= 90 {
+					wait = time.Duration(n+1) * time.Second
+				}
+			}
+			log.Printf("gemini %s: %d через %s, жду %s", geminiModel(mode), resp.StatusCode, time.Since(started).Round(time.Second), wait)
+			time.Sleep(wait)
 			continue
 		}
 		if resp.StatusCode != 200 {

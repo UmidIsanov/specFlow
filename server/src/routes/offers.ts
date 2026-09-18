@@ -267,8 +267,12 @@ offersRouter.post(
       } else if (recognizer !== "gemini" && localOcrAvailable().available) {
         localTried = true;
         const local = await recognizeLocally(buffer, report);
-        // локальный результат годен, если найдена шапка и есть строки; расхождение суммы — лишь предупреждение
-        const good = local.rows.length >= 3 && !local.warnings.some((w) => /шапку/.test(w));
+        // локальный результат годен, если найдена шапка, есть строки и у большинства — количество и цена;
+        // расхождение суммы — лишь предупреждение
+        const n = local.rows.length;
+        const withQty = local.rows.filter((r) => (r.qty ?? 0) > 0).length;
+        const withPrice = local.rows.filter((r) => (r.price ?? 0) > 0).length;
+        const good = n >= 3 && withQty >= n * 0.7 && withPrice >= n * 0.7 && !local.warnings.some((w) => /шапку/.test(w));
         if (good || recognizer === "local") {
           rows = local.rows;
           source = "converter";

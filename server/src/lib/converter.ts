@@ -84,7 +84,8 @@ const POLL_MS = 1500;
 const TIMEOUT_MS = 6 * 60 * 1000;
 // страниц в одном запросе к Gemini: больше — выше риск срыва ответа
 const CHUNK_PAGES = 5;
-const PARALLEL = 2;
+// бесплатный тариф Gemini считает запросы в минуту: по умолчанию строго по одному
+const PARALLEL = Number(process.env.CONVERTER_PARALLEL ?? 1);
 const CHUNK_ATTEMPTS = 2;
 // символы вне кириллицы/латиницы/пунктуации — признак «поплывшего» ответа модели
 const GARBAGE = /[^\u0000-\u024F\u0400-\u04FF\u2000-\u206F\u20A0-\u20CF\u2100-\u214F\u2190-\u21FF\u2200-\u22FF\u2500-\u25FF\s°±×÷№…«»„“”‘’•·]/u;
@@ -167,7 +168,6 @@ function plausible(result: ConverterResult, pages: number, mode: ConverterMode):
   const rows = result.items.length;
   if (mode !== "kp") return rows > 0;
   if (rows === 0) return false;
-  if (pages > 1 && rows < pages * 2) return false;
   // в КП у строки с количеством есть цена; если её нет у половины — колонка не прочитана
   const priced = result.items.filter((i) => (i.quantity ?? 0) > 0 && (i.price ?? 0) > 0).length;
   const withQty = result.items.filter((i) => (i.quantity ?? 0) > 0).length;

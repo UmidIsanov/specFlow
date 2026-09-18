@@ -58,18 +58,24 @@ func gridLines(_ cg: CGImage) -> (h: [Double], v: [Double]) {
     // линии на сканах серые и рваные: считаем долю тёмных пикселей, а не сплошной отрезок
     let dark: UInt8 = 185
 
+    // линия — длинный непрерывный тёмный отрезок (допускаем разрывы до 3 px: сканы рваные);
+    // строка текста такого отрезка не даёт
+    func longestRun(_ get: (Int) -> UInt8, _ n: Int) -> Int {
+        var run = 0, best = 0, gap = 0
+        for i in 0..<n {
+            if get(i) < dark { run += 1 + gap; gap = 0; if run > best { best = run } }
+            else { gap += 1; if gap > 3 { run = 0; gap = 0 } }
+        }
+        return best
+    }
     var hs: [Int] = []
     for y in 0..<h {
-        var cnt = 0
         let row = y * w
-        for x in 0..<w where gray[row + x] < dark { cnt += 1 }
-        if Double(cnt) > Double(w) * 0.30 { hs.append(y) }
+        if Double(longestRun({ gray[row + $0] }, w)) > Double(w) * 0.35 { hs.append(y) }
     }
     var vs: [Int] = []
     for x in 0..<w {
-        var cnt = 0
-        for y in 0..<h where gray[y * w + x] < dark { cnt += 1 }
-        if Double(cnt) > Double(h) * 0.10 { vs.append(x) }
+        if Double(longestRun({ gray[$0 * w + x] }, h)) > Double(h) * 0.15 { vs.append(x) }
     }
     // слипшиеся соседние пиксели одной линии — в одну координату
     func merge(_ xs: [Int], _ size: Int) -> [Double] {
