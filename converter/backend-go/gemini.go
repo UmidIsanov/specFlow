@@ -112,10 +112,14 @@ func thinkingConfig(mode string) *gThinking {
 // parseSpecFromPDF отправляет PDF напрямую в Gemini и возвращает разобранную таблицу.
 // mode: "" / "spec" — спецификация ГОСТ, "kp" — коммерческое предложение поставщика.
 // Повторяет запрос при временных ошибках (429/503) с нарастающей задержкой.
-func parseSpecFromPDF(pdf []byte, mode string, thinking int) (*SpecResult, error) {
+func parseSpecFromPDF(pdf []byte, mode string, thinking int, modelOverride string) (*SpecResult, error) {
 	apiKey := getAPIKey()
 	if apiKey == "" {
 		return nil, fmt.Errorf("не найден GEMINI_API_KEY")
+	}
+	model := geminiModel(mode)
+	if modelOverride != "" {
+		model = modelOverride
 	}
 	prompt, schema := promptAndSchema(mode)
 	userText := "Извлеки спецификацию оборудования, изделий и материалов из этого чертежа."
@@ -144,18 +148,21 @@ func parseSpecFromPDF(pdf []byte, mode string, thinking int) (*SpecResult, error
 		return nil, err
 	}
 
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
-		geminiModel(mode), apiKey)
+	// ключ — в заголовке: с ключом в URL Google отвечает пустым 404 через раз
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", model)
 
 	maxRetries := 4
 	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		started := time.Now()
-		log.Printf("gemini %s: запрос %d/%d, %d КБ", geminiModel(mode), attempt, maxRetries, len(payload)/1024)
-		resp, err := httpClient.Post(url, "application/json", bytes.NewReader(payload))
+		log.Printf("gemini %s: запрос %d/%d, %d КБ", model, attempt, maxRetries, len(payload)/1024)
+		req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("x-goog-api-key", apiKey)
+		resp, err := httpClient.Do(req)
 		if err != nil {
 			lastErr = err
-			log.Printf("gemini %s: сбой соединения через %s: %v", geminiModel(mode), time.Since(started).Round(time.Second), err)
+			log.Printf("gemini %s: сбой соединения через %s: %v", model, time.Since(started).Round(time.Second), err)
 			time.Sleep(time.Duration(2<<attempt) * time.Second)
 			continue
 		}
@@ -171,11 +178,12 @@ func parseSpecFromPDF(pdf []byte, mode string, thinking int) (*SpecResult, error
 					wait = time.Duration(n+1) * time.Second
 				}
 			}
-			log.Printf("gemini %s: %d через %s, жду %s", geminiModel(mode), resp.StatusCode, time.Since(started).Round(time.Second), wait)
+			log.Printf("gemini %s: %d через %s, жду %s", model, resp.StatusCode, time.Since(started).Round(time.Second), wait)
 			time.Sleep(wait)
 			continue
 		}
 		if resp.StatusCode != 200 {
+			log.Printf("gemini %s: HTTP %d: %.200s", model, resp.StatusCode, strings.TrimSpace(string(body)))
 			return nil, fmt.Errorf("gemini %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 		}
 
@@ -197,13 +205,13 @@ func parseSpecFromPDF(pdf []byte, mode string, thinking int) (*SpecResult, error
 		// сколько стоил запрос — в результат и в лог, чтобы цена документа была известна
 		if u := gr.UsageMetadata; u != nil {
 			spec.Usage = &Usage{
-				Model:  geminiModel(mode),
+				Model:  model,
 				Input:  u.PromptTokenCount,
 				Output: u.CandidatesTokenCount + u.ThoughtsTokenCount,
 				Total:  u.TotalTokenCount,
 			}
 			log.Printf("gemini %s: вход %d, выход %d (в т.ч. размышления %d), строк %d",
-				geminiModel(mode), u.PromptTokenCount, u.CandidatesTokenCount+u.ThoughtsTokenCount, u.ThoughtsTokenCount, len(spec.Items))
+				model, u.PromptTokenCount, u.CandidatesTokenCount+u.ThoughtsTokenCount, u.ThoughtsTokenCount, len(spec.Items))
 		}
 		return &spec, nil
 	}

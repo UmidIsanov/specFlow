@@ -186,6 +186,10 @@ function plausible(result: ConverterResult, pages: number, mode: ConverterMode):
 // Первый заход — без «размышлений» (в разы дешевле); если результат неправдоподобен —
 // повтор с бюджетом: дороже, но точнее. Токены считаем по всем попыткам.
 const RETRY_THINKING = 1024;
+// последняя ступень — сильная модель; дорого, поэтому только когда дешёвые не справились,
+// только для целых кусков (не постранично) и не больше двух раз на документ
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL ?? "gemini-pro-latest";
+const FALLBACK_MAX_PER_DOC = Number(process.env.GEMINI_FALLBACK_MAX ?? 2);
 type UsageSink = { requests: number; input: number; output: number; total: number; model: string };
 
 async function convertOne(
@@ -193,7 +197,8 @@ async function convertOne(
   filename: string,
   mode: ConverterMode,
   thinking?: number,
-  sink?: UsageSink
+  sink?: UsageSink,
+  model?: string
 ): Promise<ConverterResult> {
   const base = converterUrl();
 
@@ -201,6 +206,7 @@ async function convertOne(
   fd.append("files", new Blob([new Uint8Array(buf)], { type: "application/pdf" }), filename);
   fd.append("mode", mode);
   if (thinking !== undefined) fd.append("thinking", String(thinking));
+  if (model) fd.append("model", model);
 
   let started: Response;
   try {
@@ -401,13 +407,17 @@ async function convertUncached(
   const usage: UsageSink = { requests: 0, input: 0, output: 0, total: 0, model: "" };
 
   // кусок: сначала дёшево, потом с размышлениями; возвращаем лучший результат из попыток
-  const convertWithRetry = async (part: Buffer, name: string, pageCount: number): Promise<ConverterResult | null> => {
+  let fallbackUsed = 0;
+  const convertWithRetry = async (part: Buffer, name: string, pageCount: number, allowFallback = true): Promise<ConverterResult | null> => {
     let best: ConverterResult | null = null;
     let lastErr: unknown = null;
-    const budgets = [undefined, RETRY_THINKING];
-    for (const thinking of budgets) {
+    // ступени: дёшево → с размышлениями → сильная модель (с лимитом на документ)
+    const steps: Array<{ thinking?: number; model?: string }> = [{}, { thinking: RETRY_THINKING }];
+    if (allowFallback && FALLBACK_MODEL && fallbackUsed < FALLBACK_MAX_PER_DOC) steps.push({ model: FALLBACK_MODEL });
+    for (const step of steps) {
+      if (step.model) fallbackUsed++;
       try {
-        const r = await convertOne(part, name, mode, thinking, usage);
+        const r = await convertOne(part, name, mode, step.thinking, usage, step.model);
         if (score(r) > score(best)) best = r;
         if (plausible(r, pageCount, mode)) return r;
       } catch (err) {
@@ -446,7 +456,7 @@ async function convertUncached(
     const single = await splitPdf(chunks[i], 1);
     const perPage: ConverterResult[] = [];
     for (let j = 0; j < single.chunks.length; j++) {
-      const r = await convertWithRetry(single.chunks[j], `${base} (стр. ${from + j}).pdf`, 1).catch(() => null);
+      const r = await convertWithRetry(single.chunks[j], `${base} (стр. ${from + j}).pdf`, 1, false).catch(() => null);
       if (r) perPage.push(r);
     }
     done();

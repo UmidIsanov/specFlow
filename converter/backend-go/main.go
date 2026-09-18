@@ -76,9 +76,9 @@ func takeJob(id string) (*Job, bool) {
 }
 
 // --- Обработка одного файла в фоне ---
-func processFile(id, filename, mode string, thinking int, raw []byte) {
+func processFile(id, filename, mode string, thinking int, model string, raw []byte) {
 	entry := &FileResult{Filename: filename, Mode: mode, Items: []SpecItem{}}
-	spec, err := parseSpecFromPDF(raw, mode, thinking)
+	spec, err := parseSpecFromPDF(raw, mode, thinking, model)
 	if err != nil {
 		msg := err.Error()
 		entry.Error = &msg
@@ -155,9 +155,12 @@ func handleConvert(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// model=… — модель для этого запроса (последняя ступень повтора — pro)
+	model := r.FormValue("model")
+
 	id := newJobID()
 	setJob(id, &Job{Status: "pending"})
-	go processFile(id, fh.Filename, mode, thinking, raw)
+	go processFile(id, fh.Filename, mode, thinking, model, raw)
 	writeJSON(w, 200, map[string]string{"job_id": id})
 }
 
