@@ -1,7 +1,7 @@
 {
-  "name": "specflow",
+  "name": "sverka",
   "private": true,
-  "description": "SpecFlow — спецификации, анализ КП, склад и ИТД на объекте. Монорепо: web, server, converter.",
+  "description": "Сверка (sverka.uz) — спецификации, анализ КП, склад и ИТД на объекте. Монорепо: web, server, converter.",
   "scripts": {
     "dev": "concurrently -n api,web,converter -c blue,green,yellow \"npm run dev --prefix server\" \"npm run dev --prefix web\" \"npm run dev:converter\"",
     "dev:converter": "cd converter/backend-go && go build -o ../converter-go-dev . && cd .. && PORT=${CONVERTER_PORT:-8137} ./converter-go-dev",

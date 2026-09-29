@@ -13,7 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-app.get("/api/health", (_req, res) => res.json({ ok: true, service: "specflow-server" }));
+app.get("/api/health", (_req, res) => res.json({ ok: true, service: "sverka-server" }));
 app.use("/api/projects", projectsRouter);
 app.use("/api/suppliers", suppliersRouter);
 app.use("/api", specRouter);
@@ -35,4 +35,4 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
 });
 
 const port = Number(process.env.PORT ?? 4000);
-app.listen(port, () => console.log(`SpecFlow API → http://localhost:${port}`));
+app.listen(port, () => console.log(`Сверка API → http://localhost:${port}`));

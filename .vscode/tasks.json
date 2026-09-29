@@ -1,10 +1,10 @@
 {
-  // Запуск SpecFlow из VS Code: Terminal → Run Task… → «SpecFlow: запустить всё»
+  // Запуск Сверка из VS Code: Terminal → Run Task… → «Сверка: запустить всё»
   // или Ctrl+Shift+B (Cmd+Shift+B на Mac) — это задача по умолчанию.
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "SpecFlow: запустить всё",
+      "label": "Сверка: запустить всё",
       "dependsOn": ["API :4000", "Веб :3000", "Конвертер :8137"],
       "dependsOrder": "parallel",
       "group": { "kind": "build", "isDefault": true },
@@ -16,7 +16,7 @@
       "command": "npm run dev",
       "options": { "cwd": "${workspaceFolder}/server" },
       "isBackground": true,
-      "presentation": { "panel": "dedicated", "group": "specflow", "reveal": "always" },
+      "presentation": { "panel": "dedicated", "group": "sverka", "reveal": "always" },
       "problemMatcher": []
     },
     {
@@ -25,7 +25,7 @@
       "command": "npm run dev",
       "options": { "cwd": "${workspaceFolder}/web" },
       "isBackground": true,
-      "presentation": { "panel": "dedicated", "group": "specflow", "reveal": "always" },
+      "presentation": { "panel": "dedicated", "group": "sverka", "reveal": "always" },
       "problemMatcher": []
     },
     {
@@ -34,7 +34,7 @@
       "command": "npm run build && npm start",
       "options": { "cwd": "${workspaceFolder}/web" },
       "isBackground": true,
-      "presentation": { "panel": "dedicated", "group": "specflow", "reveal": "always" },
+      "presentation": { "panel": "dedicated", "group": "sverka", "reveal": "always" },
       "problemMatcher": []
     },
     {
@@ -43,7 +43,7 @@
       "command": "npm run dev:converter",
       "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
-      "presentation": { "panel": "dedicated", "group": "specflow", "reveal": "always" },
+      "presentation": { "panel": "dedicated", "group": "sverka", "reveal": "always" },
       "problemMatcher": []
     }
   ]

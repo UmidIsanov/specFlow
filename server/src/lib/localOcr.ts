@@ -37,7 +37,7 @@ export function localOcrAvailable(): { available: boolean; reason?: string } {
 }
 
 async function renderPages(buf: Buffer, report: (done: number, total: number) => void): Promise<{ dir: string; files: string[] }> {
-  const dir = mkdtempSync(join(tmpdir(), "specflow-ocr-"));
+  const dir = mkdtempSync(join(tmpdir(), "sverka-ocr-"));
   const pdf = join(dir, "doc.pdf");
   const { writeFileSync } = await import("node:fs");
   writeFileSync(pdf, buf);
