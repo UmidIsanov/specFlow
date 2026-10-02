@@ -1,6 +1,7 @@
 import Foundation
 import Vision
 import AppKit
+import CoreImage
 
 // Локальное распознавание скана движком macOS Vision — бесплатно и офлайн.
 // Вход: PNG страницы. Выход: JSON со строками текста и их координатами (0..1, начало вверху слева).
@@ -20,22 +21,70 @@ guard let img = NSImage(contentsOfFile: path),
     exit(1)
 }
 
-let req = VNRecognizeTextRequest()
-req.recognitionLevel = .accurate
-req.recognitionLanguages = langs
-// автокоррекция «исправляет» артикулы и коды — отключаем
-req.usesLanguageCorrection = false
+func recognize(_ image: CGImage) -> [VNRecognizedTextObservation] {
+    let req = VNRecognizeTextRequest()
+    req.recognitionLevel = .accurate
+    req.recognitionLanguages = langs
+    // автокоррекция «исправляет» артикулы и коды — отключаем
+    req.usesLanguageCorrection = false
+    do {
+        try VNImageRequestHandler(cgImage: image, options: [:]).perform([req])
+    } catch {
+        FileHandle.standardError.write("vision: \(error)\n".data(using: .utf8)!)
+        exit(1)
+    }
+    return req.results ?? []
+}
 
-let handler = VNImageRequestHandler(cgImage: cg, options: [:])
-do {
-    try handler.perform([req])
-} catch {
-    FileHandle.standardError.write("vision: \(error)\n".data(using: .utf8)!)
-    exit(1)
+let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+
+/// Повышение контраста. По умолчанию выключено: на 11 страницах реальных сканов оно
+/// отняло 22 слова и 14 линий сетки, не добавив точности. Включать (OCR_CONTRAST=1.4)
+/// стоит только для совсем бледных сканов.
+func enhance(_ image: CGImage) -> CGImage {
+    let ci = CIImage(cgImage: image)
+    guard let controls = CIFilter(name: "CIColorControls") else { return image }
+    controls.setValue(ci, forKey: kCIInputImageKey)
+    let contrast = Double(ProcessInfo.processInfo.environment["OCR_CONTRAST"] ?? "") ?? 1.0
+    controls.setValue(0.0, forKey: kCIInputSaturationKey)
+    controls.setValue(contrast, forKey: kCIInputContrastKey)
+    controls.setValue(0.0, forKey: kCIInputBrightnessKey)
+    guard let out = controls.outputImage,
+          let cg = ciContext.createCGImage(out, from: out.extent) else { return image }
+    return cg
+}
+
+/// Наклон страницы по углу строк текста: Vision отдаёт углы ячеек, берём медиану.
+func skewAngle(_ obs: [VNRecognizedTextObservation]) -> CGFloat {
+    let angles = obs.compactMap { o -> CGFloat? in
+        let dx = o.topRight.x - o.topLeft.x
+        let dy = o.topRight.y - o.topLeft.y
+        guard dx > 0.05 else { return nil }   // короткие куски угол не показывают
+        return atan2(dy, dx)
+    }.sorted()
+    guard angles.count >= 8 else { return 0 }
+    return angles[angles.count / 2]
+}
+
+func rotate(_ image: CGImage, by angle: CGFloat) -> CGImage {
+    let ci = CIImage(cgImage: image).transformed(by: CGAffineTransform(rotationAngle: -angle))
+    guard let cg = ciContext.createCGImage(ci, from: ci.extent) else { return image }
+    return cg
+}
+
+var working = enhance(cg)
+var results = recognize(working)
+// выравниваем только заметный наклон: на ровном скане поворот только портит
+let angle = skewAngle(results)
+if abs(angle) > 0.004 {
+    working = rotate(working, by: angle)
+    let second = recognize(working)
+    if second.count >= results.count { results = second }
+    FileHandle.standardError.write("deskew: \(String(format: "%.2f", angle * 180 / .pi))°\n".data(using: .utf8)!)
 }
 
 var lines: [[String: Any]] = []
-for obs in req.results ?? [] {
+for obs in results {
     guard let c = obs.topCandidates(1).first else { continue }
     let b = obs.boundingBox
     lines.append([
@@ -90,7 +139,7 @@ func gridLines(_ cg: CGImage) -> (h: [Double], v: [Double]) {
     // CGContext рисует снизу вверх: строка 0 буфера — низ страницы. Переводим в «начало сверху».
     return (merge(hs, h).map { 1 - $0 }.sorted(), merge(vs, w))
 }
-let grid = gridLines(cg)
-let out: [String: Any] = ["width": cg.width, "height": cg.height, "lines": lines, "hlines": grid.h, "vlines": grid.v]
+let grid = gridLines(working)
+let out: [String: Any] = ["width": working.width, "height": working.height, "lines": lines, "hlines": grid.h, "vlines": grid.v]
 let data = try JSONSerialization.data(withJSONObject: out)
 FileHandle.standardOutput.write(data)
