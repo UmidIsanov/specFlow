@@ -155,7 +155,17 @@ npm run dev                          # api :4000 · web :3000 · converter :8137
 через Terminal → Run Task… Если машине не хватает памяти, вместо «Веб :3000» запускайте
 «Веб :3000 (production)» — он в разы легче dev-режима.
 
-**Сервер.** Конвертер деплоится из папки `converter/` этого репозитория — бинарник
+## Установка на сервер
+
+Готовый комплект — в [`deploy/`](deploy/README.md): службы systemd, конфиг nginx с паролем
+и https, скрипты установки и обновления. Коротко: Ubuntu 24.04, 4 ГБ памяти, затем
+
+```bash
+git clone https://github.com/UmidIsanov/specFlow.git /opt/sverka
+DOMAIN=sverka.uz bash /opt/sverka/deploy/setup.sh
+```
+
+**Старый сервер конвертера.** Конвертер деплоится из папки `converter/` этого репозитория — бинарник
 `converter/converter-go` собирается командой `npm run build:converter` (Linux/amd64) и коммитится,
 на сервере: `git pull && bash converter/start.sh`. Старый репозиторий `pdf-spec-converter`
 можно архивировать.

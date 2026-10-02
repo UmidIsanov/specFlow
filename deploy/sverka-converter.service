@@ -1,0 +1,20 @@
+# Распознавание сканов (Go + Gemini). Слушает только localhost — наружу не выходит.
+[Unit]
+Description=Сверка — конвертер сканов
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sverka
+WorkingDirectory=/opt/sverka/converter
+Environment=PORT=8137
+ExecStart=/opt/sverka/converter/converter-go
+Restart=always
+RestartSec=5
+# ключ Gemini читается из converter/.env самим бинарником
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
