@@ -14,7 +14,7 @@ const run = promisify(execFile);
  */
 
 type OcrLine = { text: string; conf: number; x: number; y: number; w: number; h: number };
-type OcrPage = { width: number; height: number; lines: OcrLine[] };
+type OcrPage = { width: number; height: number; lines: OcrLine[]; hlines?: number[]; vlines?: number[] };
 
 export type LocalOcrResult = {
   docNumber: string;
@@ -67,14 +67,79 @@ const COLUMNS: Array<{ key: keyof RawRow; re: RegExp }> = [
   { key: "qty", re: /(кол|количест|qty|quantity|q-ty)/i },
   { key: "unit", re: /^(ед|единиц|unit)/i },
   { key: "price", re: /(цена|price)/i },
-  { key: "note", re: /(примеч|remark|note)/i },
+  { key: "note", re: /(примеч|коммент|remark|note|comment)/i },
 ];
 const TOTAL_COL = /(сумма|стоимость|total|amount|итого)/i;
 
-type Column = { key: keyof RawRow | "total"; x0: number; x1: number; cx: number };
+type Column = { key: keyof RawRow | "total" | null; x0: number; x1: number; cx: number };
 
-function findHeader(lines: OcrLine[]): { y: number; h: number; columns: Column[] } | null {
-  // группируем по y и ищем полосу, где ≥3 слова похожи на заголовки колонок
+/**
+ * Колонки по вертикальным линиям таблицы — это точные границы ячеек.
+ * Угадывать по положению слов шапки нельзя: заголовок центрирован, а текст прижат влево.
+ */
+function columnsFromGrid(page: OcrPage): Column[] | null {
+  const v = (page.vlines ?? []).filter((x) => x > 0.005 && x < 0.995).sort((a, b) => a - b);
+  // слипшиеся линии — в одну
+  const edges: number[] = [];
+  for (const x of v) if (!edges.length || x - edges[edges.length - 1] > 0.012) edges.push(x);
+  if (edges.length < 4) return null;
+  return edges.slice(0, -1).map((x0, i) => ({ key: null, x0, x1: edges[i + 1], cx: (x0 + edges[i + 1]) / 2 }));
+}
+
+/** Какие слова шапки попали в колонку — по ним и определяется, что это за колонка. */
+function nameColumns(columns: Column[], band: OcrLine[]): void {
+  const text = columns.map(() => "");
+  for (const w of band) {
+    const i = columns.findIndex((c) => w.x + w.w / 2 >= c.x0 && w.x + w.w / 2 < c.x1);
+    if (i >= 0) text[i] = `${text[i]} ${w.text}`.trim();
+  }
+  const used = new Set<string>();
+  columns.forEach((c, i) => {
+    const t = text[i];
+    if (!t) return;
+    const hit = COLUMNS.find(({ key, re }) => !used.has(key) && re.test(t));
+    if (hit) {
+      c.key = hit.key;
+      used.add(hit.key);
+    } else if (TOTAL_COL.test(t) && !used.has("total")) {
+      c.key = "total";
+      used.add("total");
+    }
+  });
+}
+
+/**
+ * Полосы строк по горизонтальным линиям сетки. Это единственный надёжный способ:
+ * номер позиции печатают по центру высокой ячейки, поэтому первые строки наименования
+ * оказываются выше номера и по его координате строку определить нельзя.
+ */
+function bandsFromGrid(page: OcrPage, startY: number): OcrLine[][] | null {
+  const h = (page.hlines ?? []).filter((y) => y > startY - 0.01 && y < 0.99).sort((a, b) => a - b);
+  const edges: number[] = [];
+  for (const y of h) if (!edges.length || y - edges[edges.length - 1] > 0.012) edges.push(y);
+  if (edges.length < 2) return null;
+  const limits = [...edges, 1];
+  const out: OcrLine[][] = limits.slice(0, -1).map(() => []);
+  for (const l of page.lines) {
+    if (l.y <= startY) continue;
+    const i = limits.findIndex((y, k) => l.y + l.h / 2 >= y && l.y + l.h / 2 < limits[k + 1]);
+    if (i >= 0) out[i].push(l);
+  }
+  return out.filter((b) => b.length).map((b) => b.sort((a, c) => a.y - c.y || a.x - c.x));
+}
+
+/** Полосы строк по вертикали: слова одной строки таблицы стоят на близких y. */
+function bands(lines: OcrLine[]): OcrLine[][] {
+  const out: OcrLine[][] = [];
+  for (const l of [...lines].sort((a, b) => a.y - b.y || a.x - b.x)) {
+    const last = out[out.length - 1];
+    if (last && Math.abs(l.y - last[0].y) < Math.min(l.h, last[0].h) * 0.6) last.push(l);
+    else out.push([l]);
+  }
+  return out;
+}
+
+function findHeader(lines: OcrLine[]) {
   const sorted = [...lines].sort((a, b) => a.y - b.y);
   for (let i = 0; i < sorted.length; i++) {
     // шапка бывает в 2–3 строки и на двух языках — берём полосу в три высоты строки
@@ -89,10 +154,11 @@ function findHeader(lines: OcrLine[]): { y: number; h: number; columns: Column[]
     const keys = new Set(cols.map((c) => c.key));
     if (keys.has("name") && keys.size >= 3) {
       cols.sort((a, b) => a.cx - b.cx);
-      // одинаковые ключи — оставляем левый
       const seen = new Set<string>();
-      const uniq = cols.filter((c) => (seen.has(c.key) ? false : (seen.add(c.key), true)));
-      return { y: sorted[i].y, h: Math.max(...band.map((b) => b.h)), columns: uniq };
+      const uniq = cols.filter((c) => (seen.has(String(c.key)) ? false : (seen.add(String(c.key)), true)));
+      // низ шапки, а не её верх: иначе вторая строка заголовка попадёт в данные
+      const bottom = Math.max(...band.map((b) => b.y + b.h));
+      return { y: bottom, columns: uniq, band };
     }
   }
   return null;
@@ -117,7 +183,7 @@ function columnOf(l: OcrLine, columns: Column[]): Column {
 }
 
 const NUM = /^-?\d{1,3}(?:[  ]\d{3})*(?:[.,]\d+)?$|^-?\d+(?:[.,]\d+)?$/;
-const INT = /^\d{1,4}$/;
+const INT = /^\d{1,4}\.?$/;
 const STOP = /^(итого|всего|total|сумма к оплате|в том числе|ндс)/i;
 
 function toNum(s?: string): number | undefined {
@@ -127,67 +193,75 @@ function toNum(s?: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-type Cells = Partial<Record<Column["key"], string>>;
+type CellKey = Exclude<Column["key"], null>;
+type Cells = Partial<Record<CellKey, string>>;
 
-function tableFromPage(page: OcrPage, columns: Column[] | null, headerY: number): { rows: Cells[]; columns: Column[] | null; declaredTotal?: number } {
-  const header = columns ? null : findHeader(page.lines);
-  const cols = columns ?? header?.columns ?? null;
-  if (!cols) return { rows: [], columns: null };
-  const startY = columns ? -1 : (header?.y ?? headerY) + (header?.h ?? 0);
+function tableFromPage(
+  page: OcrPage,
+  known: Column[] | null
+): { rows: Cells[]; columns: Column[] | null; declaredTotal?: number } {
+  let cols = known;
+  let startY = -1;
 
-  const body = page.lines.filter((l) => l.y > startY + 0.002).sort((a, b) => a.y - b.y || a.x - b.x);
-
-  // полосы по y
-  const bands: OcrLine[][] = [];
-  for (const l of body) {
-    const last = bands[bands.length - 1];
-    if (last && Math.abs(l.y - last[0].y) < Math.min(l.h, last[0].h) * 0.6) last.push(l);
-    else bands.push([l]);
+  if (!cols) {
+    const header = findHeader(page.lines);
+    if (!header) return { rows: [], columns: null };
+    startY = header.y;
+    const grid = columnsFromGrid(page);
+    if (grid) {
+      // границы берём из сетки, а названия колонок — из слов шапки
+      nameColumns(grid, header.band);
+      const named = grid.filter((c) => c.key);
+      cols = named.some((c) => c.key === "name") ? grid : header.columns;
+    } else {
+      cols = header.columns;
+    }
   }
+  if (!cols) return { rows: [], columns: null };
 
+  const body = page.lines.filter((l) => l.y > startY + 0.002);
   const rows: Cells[] = [];
   let declaredTotal: number | undefined;
   let current: Cells | null = null;
-  // в таблицах с высокими ячейками номер стоит по центру: первые строки наименования идут выше него
   let pending: Cells = {};
   const posCol = cols.find((c) => c.key === "pos");
+  const firstColX = Math.min(...cols.map((c) => c.x0));
 
-  const put = (cell: Cells, c: Column, t: string) => {
-    cell[c.key] = cell[c.key] ? `${cell[c.key]} ${t}` : t;
+  const put = (cell: Cells, key: Column["key"], t: string) => {
+    if (!key) return;
+    cell[key] = cell[key] ? `${cell[key]} ${t}` : t;
   };
 
-  for (const band of bands) {
+  const gridBands = bandsFromGrid(page, startY);
+  for (const band of gridBands ?? bands(body)) {
     const texts = band.map((b) => b.text.trim());
-    const joined = texts.join(" ");
-    if (STOP.test(joined)) {
+    if (STOP.test(texts.join(" "))) {
       const nums = texts.map(toNum).filter((n): n is number => n !== undefined && n > 0);
       if (nums.length) declaredTotal = Math.max(...nums);
       current = null;
       continue;
     }
-    // новая строка — там, где в колонке № стоит число; без колонки № — число у левого края
-    const firstColX = Math.min(...cols.map((c) => c.x0));
-    const posWord = posCol
-      ? band.find((b) => columnOf(b, cols).key === "pos" && INT.test(b.text.trim()))
-      : band.find((b) => b.x < firstColX - 0.01 && /^\d{1,3}\.?$/.test(b.text.trim()));
-    if (posWord) {
-      current = { ...pending, pos: posWord.text.trim() };
+    // новая строка — там, где в первой колонке стоит номер: «1», «1.»
+    const posWord = band.find((b) => {
+      const inPos = posCol ? columnOf(b, cols!).key === "pos" : b.x < firstColX + 0.03;
+      return inPos && INT.test(b.text.trim());
+    });
+    if (gridBands) {
+      // ячейка целиком — одна строка таблицы
+      current = { pos: posWord?.text.trim().replace(/\.$/, "") };
+      rows.push(current);
+    } else if (posWord) {
+      current = { ...pending, pos: posWord.text.trim().replace(/\.$/, "") };
       pending = {};
       rows.push(current);
-      for (const b of band) {
-        if (b === posWord) continue;
-        const c = columnOf(b, cols);
-        if (c.key !== "pos") put(current, c, b.text.trim());
-      }
-      continue;
     }
-    // строка без номера — продолжение текущей; до первой строки с номером копим в pending
-    const words = band.map((b) => ({ b, c: columnOf(b, cols) }));
     const target = current ?? pending;
-    for (const w of words) if (w.c.key !== "pos") put(target, w.c, w.b.text.trim());
+    for (const b of band) {
+      if (b === posWord) continue;
+      const c = columnOf(b, cols);
+      if (c.key && c.key !== "pos") put(target, c.key, b.text.trim());
+    }
   }
-  // хвост без номера в конце страницы — к последней строке
-  if (current && Object.keys(pending).length) for (const [k, v] of Object.entries(pending)) put(current, { key: k } as Column, v as string);
   return { rows, columns: cols, declaredTotal };
 }
 
@@ -228,6 +302,26 @@ function findDeclaredTotal(pages: OcrPage[]): number | undefined {
   return undefined;
 }
 
+/** Текст первой страницы — чтобы понять, что за документ, не распознавая его целиком. */
+export async function firstPageText(buf: Buffer): Promise<string> {
+  if (!localOcrAvailable().available) return "";
+  const dir = mkdtempSync(join(tmpdir(), "sverka-kind-"));
+  try {
+    const { writeFileSync } = await import("node:fs");
+    const pdf = join(dir, "doc.pdf");
+    writeFileSync(pdf, buf);
+    await run("pdftoppm", ["-r", "150", "-png", "-f", "1", "-l", "1", pdf, join(dir, "p")]);
+    const file = readdirSync(dir).find((f) => f.endsWith(".png"));
+    if (!file) return "";
+    const page = await ocrPage(join(dir, file));
+    return page.lines.map((l) => l.text).join(" ");
+  } catch {
+    return "";
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 export async function recognizeLocally(
   buf: Buffer,
   report: (p: { stage: string; done: number; total: number }) => void = () => {}
@@ -249,13 +343,14 @@ export async function recognizeLocally(
     const cells: Cells[] = [];
     let declaredTotal: number | undefined;
     for (const p of pages) {
-      const t = tableFromPage(p, columns, 0);
+      const t = tableFromPage(p, columns);
       columns = columns ?? t.columns;
       cells.push(...t.rows);
       if (t.declaredTotal) declaredTotal = t.declaredTotal;
     }
     if (!declaredTotal) declaredTotal = findDeclaredTotal(pages);
 
+    const DATASHEET = /\b[A-Z]{3,4}\d?-?UN-\d{6}-[A-Z]{3}-[A-Z]{3}[ -]?\d{3,4}\b/i;
     const rows: RawRow[] = cells
       .filter((c) => c.name)
       .map((c) => ({
@@ -263,7 +358,9 @@ export async function recognizeLocally(
         name: (c.name ?? "").replace(/\s+/g, " ").trim(),
         code: c.code?.trim(),
         article: c.article?.trim(),
-        datasheet: c.datasheet?.trim(),
+        datasheet:
+          c.datasheet?.trim() ||
+          [c.note, c.article, c.name].map((t) => t?.match(DATASHEET)?.[0]).find(Boolean),
         unit: c.unit?.trim() || "шт",
         qty: toNum(c.qty),
         price: toNum(c.price),

@@ -2,11 +2,12 @@ import { Router } from "express";
 import multer from "multer";
 import { z } from "zod";
 import { prisma } from "../db.js";
-import { ah, HttpError } from "../lib/http.js";
+import { ah, HttpError, originalName } from "../lib/http.js";
 import { parseSpecWorkbook, inspectWorkbook } from "../lib/xlsx.js";
 import { parsePdfTable } from "../lib/pdfTable.js";
 import { convertPdf, converterStatus } from "../lib/converter.js";
-import { localOcrAvailable } from "../lib/localOcr.js";
+import { firstPageText, localOcrAvailable, recognizeLocally } from "../lib/localOcr.js";
+import { classifyRows, classifyText } from "../lib/docKind.js";
 import { createJob, getJob, runJob } from "../lib/jobs.js";
 
 export const specRouter = Router();
@@ -149,25 +150,61 @@ specRouter.post(
     const fallbackSystem =
       typeof req.body.system === "string" && req.body.system ? req.body.system : "ПС";
     const replace = req.body.replace === "true";
-    const { buffer, originalname } = req.file;
+    const buffer = req.file.buffer;
+    const originalname = originalName(req.file);
 
     const job = createJob("Читаю PDF");
     runJob(job, async (report) => {
-      let rows;
-      let source: "text" | "converter";
+      report({ stage: "Определяю, что за документ", done: 0, total: 0 });
+      const table = await parsePdfTable(buffer);
+      // текст первой страницы: у текстового PDF — из слоя, у скана — локальным распознаванием
+      const head =
+        table.rows.length > 0
+          ? table.rows.slice(0, 12).map((r) => `${r.name} ${r.article ?? ""}`).join(" ") + " " + table.columns.map((c) => c.title).join(" ")
+          : await firstPageText(buffer);
+      const guess = classifyText(head);
+      if (guess.kind === "kp") {
+        throw new HttpError(
+          422,
+          `Похоже, это коммерческое предложение, а не спецификация (${guess.reasons.slice(0, 2).join(", ")}). ` +
+            "Загрузите его на вкладке «Анализ КП» — там оно сравнится со спецификацией и заявкой."
+        );
+      }
+      let rows: typeof table.rows | undefined;
+      let source: "text" | "converter" = "converter";
       let pages: number | undefined;
       let columns;
-      const table = await parsePdfTable(buffer);
+      let warnings: string[] = [];
+
       if (table.rows.length) {
         rows = table.rows;
         source = "text";
         pages = table.pages;
         columns = table.columns.filter((c) => c.field).map((c) => ({ field: c.field, title: c.title }));
-      } else {
+      } else if ((process.env.RECOGNIZER ?? "gemini") !== "gemini" && localOcrAvailable().available) {
+        const local = await recognizeLocally(buffer, report);
+        const n = local.rows.length;
+        const sure = n >= 3 && !local.warnings.some((w) => /шапку|не сходится/.test(w));
+        if (sure) {
+          rows = local.rows;
+          warnings = [...local.warnings, "Распознано локально, без Gemini"];
+        }
+      }
+      if (!rows) {
         const converted = await convertPdf(buffer, originalname, "spec", report);
         if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу спецификации");
         rows = converted.rows;
-        source = "converter";
+        warnings = converted.warnings;
+      }
+
+      // вторая проверка — по ценам в разобранных строках
+      const kind = classifyRows(rows);
+      if (kind.kind === "kp") {
+        throw new HttpError(
+          422,
+          `Похоже, это коммерческое предложение, а не спецификация: цены указаны в ${kind.priced} строках из ${kind.total}. ` +
+            "Загрузите его на вкладке «Анализ КП» — тогда оно сравнится со спецификацией и заявкой."
+        );
       }
 
       report({ stage: "Сохраняю позиции в базу", done: 1, total: 1 });
@@ -197,6 +234,7 @@ specRouter.post(
         created: rows.length,
         source,
         pages,
+        warnings,
         columns,
         buildings: [...new Set(rows.map((r) => r.building).filter(Boolean))],
         preview: rows.slice(0, 5),

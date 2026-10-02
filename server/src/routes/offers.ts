@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { z } from "zod";
 import { prisma } from "../db.js";
-import { ah, HttpError } from "../lib/http.js";
+import { ah, HttpError, originalName } from "../lib/http.js";
 import { parseSpecWorkbook } from "../lib/xlsx.js";
 import { matchOfferItem, normalizeArticle, normalizeKey, type Candidate } from "../lib/match.js";
 import { expandTagList, findTagsInText } from "../lib/tags.js";
@@ -242,7 +242,8 @@ offersRouter.post(
   ah(async (req, res) => {
     if (!req.file) throw new HttpError(400, "Файл не передан");
     const projectId = req.params.projectId;
-    const { buffer, originalname } = req.file;
+    const buffer = req.file.buffer;
+    const originalname = originalName(req.file);
     const requestedSupplierId = typeof req.body.supplierId === "string" ? req.body.supplierId : "";
     const requestedNumber = typeof req.body.number === "string" ? req.body.number : "";
     const requestedCurrency = typeof req.body.currency === "string" ? req.body.currency : "";
@@ -272,7 +273,9 @@ offersRouter.post(
         const n = local.rows.length;
         const withQty = local.rows.filter((r) => (r.qty ?? 0) > 0).length;
         const withPrice = local.rows.filter((r) => (r.price ?? 0) > 0).length;
-        const good = n >= 3 && withQty >= n * 0.7 && withPrice >= n * 0.7 && !local.warnings.some((w) => /шапку/.test(w));
+        // итог документа — самая строгая проверка: не сошёлся, значит строки прочитаны не все
+        const totalOk = !local.warnings.some((w) => /не сходится/.test(w));
+        const good = n >= 3 && withQty >= n * 0.7 && withPrice >= n * 0.7 && totalOk && !local.warnings.some((w) => /шапку/.test(w));
         if (good || recognizer === "local") {
           rows = local.rows;
           source = "converter";
