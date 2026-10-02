@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Comparison } from "@/lib/types";
 import { VerdictBadge } from "@/components/ui";
+import { TableShell, rowClass } from "@/components/table";
 import { compactMoney, nf } from "@/lib/format";
 
 /** Матрица «спецификация × КП»: строка проекта, колонка — что предложил каждый поставщик. */
@@ -36,11 +37,12 @@ export default function ComparisonMatrix({ data, projectId }: { data: Comparison
         ) : null}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-ink-200 bg-white">
+      <TableShell>
         <table className="w-full min-w-[900px] border-collapse text-sm">
-          <thead>
+          <thead className="sticky top-0 z-20">
             <tr className="border-b border-ink-200 bg-ink-50 text-left text-xs uppercase text-ink-400">
-              <th className="sticky left-0 z-10 min-w-[300px] bg-ink-50 px-3 py-2 font-medium">Закупочная позиция</th>
+              <th className="sticky left-0 z-30 w-12 bg-ink-50 px-3 py-2 text-right font-medium">#</th>
+              <th className="sticky left-12 z-30 min-w-[280px] bg-ink-50 px-3 py-2 font-medium">Закупочная позиция</th>
               <th className="px-3 py-2 text-right font-medium">План</th>
               {data.offers.map((o) => (
                 <th key={o.id} className="min-w-[240px] border-l border-ink-200 px-3 py-2 font-medium">
@@ -55,9 +57,12 @@ export default function ComparisonMatrix({ data, projectId }: { data: Comparison
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ row }) => (
-              <tr key={row.specItem.id} className="border-b border-ink-100 last:border-0">
-                <td className="sticky left-0 z-10 bg-white px-3 py-2 align-top">
+            {rows.map(({ row }, idx) => (
+              <tr key={row.specItem.id} className={rowClass}>
+                <td className="sticky left-0 z-10 bg-white px-3 py-2 text-right align-top tabular text-ink-400">
+                  {idx + 1}
+                </td>
+                <td className="sticky left-12 z-10 bg-white px-3 py-2 align-top">
                   <div className="font-medium leading-snug">{row.specItem.name}</div>
                   <div className="text-xs text-ink-400">
                     {row.specItem.article ?? "без маркировки"}
@@ -117,7 +122,7 @@ export default function ComparisonMatrix({ data, projectId }: { data: Comparison
             ))}
           </tbody>
         </table>
-      </div>
+      </TableShell>
     </div>
   );
 }

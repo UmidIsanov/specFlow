@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { AuditLine, TagAudit } from "@/lib/types";
 import { Card, Badge } from "@/components/ui";
+import { TableShell, theadClass, rowClass } from "@/components/table";
 import { nf } from "@/lib/format";
 
 const VERDICT: Record<AuditLine["verdict"], { label: string; tone: "green" | "amber" | "red" | "gray" }> = {
@@ -54,11 +55,11 @@ export default function AuditTables({ audit }: { audit: TagAudit }) {
       </nav>
 
       {(tab === "lines" || tab === "outside") && (
-        <Card className="overflow-x-auto">
+        <TableShell>
           <table className="w-full min-w-[900px] text-sm">
-            <thead className="border-b border-ink-200 bg-ink-50 text-left text-xs uppercase text-ink-400">
+            <thead className={theadClass}>
               <tr>
-                <th className="w-12 px-3 py-2 font-medium">№</th>
+                <th className="w-16 px-3 py-2 font-medium">№ КП</th>
                 <th className="px-3 py-2 font-medium">Позиция КП</th>
                 <th className="px-3 py-2 font-medium">Опросный лист</th>
                 <th className="px-3 py-2 text-right font-medium">Кол-во</th>
@@ -68,9 +69,9 @@ export default function AuditTables({ audit }: { audit: TagAudit }) {
             </thead>
             <tbody>
               {(tab === "lines" ? audit.lines : problems).map((l) => (
-                <tr key={l.id} className="border-b border-ink-100 align-top last:border-0 hover:bg-ink-50">
+                <tr key={l.id} className={rowClass}>
                   <td className="px-3 py-2 tabular text-ink-400">{l.pos}</td>
-                  <td className="px-3 py-2">
+                  <td className="max-w-[460px] px-3 py-2">
                     <div className="leading-snug">{l.name}</div>
                     {l.tagsListed > 0 ? (
                       <div className="mt-0.5 text-xs text-ink-400">
@@ -105,7 +106,7 @@ export default function AuditTables({ audit }: { audit: TagAudit }) {
               ))}
             </tbody>
           </table>
-        </Card>
+        </TableShell>
       )}
 
       {tab === "issues" && (
@@ -170,9 +171,9 @@ export default function AuditTables({ audit }: { audit: TagAudit }) {
       )}
 
       {tab === "missing" && (
-        <Card className="overflow-x-auto">
+        <TableShell>
           <table className="w-full min-w-[800px] text-sm">
-            <thead className="border-b border-ink-200 bg-ink-50 text-left text-xs uppercase text-ink-400">
+            <thead className={theadClass}>
               <tr>
                 <th className="w-16 px-3 py-2 font-medium">Поз.</th>
                 <th className="px-3 py-2 font-medium">Тэг</th>
@@ -183,7 +184,7 @@ export default function AuditTables({ audit }: { audit: TagAudit }) {
             </thead>
             <tbody>
               {audit.notOffered.slice(0, shown).map((n) => (
-                <tr key={n.specItemId} className="border-b border-ink-100 last:border-0 hover:bg-ink-50">
+                <tr key={n.specItemId} className={rowClass}>
                   <td className="px-3 py-2 tabular text-ink-400">{n.pos}</td>
                   <td className="whitespace-nowrap px-3 py-2 font-medium tabular">{n.tag}</td>
                   <td className="px-3 py-2">{n.name}</td>
@@ -205,7 +206,7 @@ export default function AuditTables({ audit }: { audit: TagAudit }) {
               </button>
             </div>
           ) : null}
-        </Card>
+        </TableShell>
       )}
     </div>
   );

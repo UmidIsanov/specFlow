@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import type { Analysis, OfferFull, SpecItem } from "@/lib/types";
 import { Card, VerdictBadge, Badge, Stat, LinkButton } from "@/components/ui";
 import VerdictControl from "@/components/VerdictControl";
+import { TableShell, theadClass, rowClass } from "@/components/table";
 import PrintButton from "@/components/PrintButton";
 import ExportButton from "@/components/ExportButton";
 import { money, nf } from "@/lib/format";
@@ -55,9 +56,9 @@ export default async function OfferPage({ params }: { params: Promise<{ id: stri
         />
       </div>
 
-      <Card className="overflow-x-auto">
+      <TableShell>
         <table className="w-full min-w-[1100px] text-sm">
-          <thead className="border-b border-ink-200 bg-ink-50 text-left text-xs uppercase text-ink-400">
+          <thead className={theadClass}>
             <tr>
               <th className="px-3 py-2 font-medium">Позиция проекта</th>
               <th className="px-3 py-2 font-medium">Предложено поставщиком</th>
@@ -73,8 +74,8 @@ export default async function OfferPage({ params }: { params: Promise<{ id: stri
               const s = item.specItem;
               const short = s && s.qtyPlan > item.qty;
               return (
-                <tr key={item.id} className="border-b border-ink-100 align-top last:border-0">
-                  <td className="px-3 py-3">
+                <tr key={item.id} className={rowClass}>
+                  <td className="max-w-[320px] px-3 py-3">
                     {s ? (
                       <>
                         <div className="font-medium leading-snug">{s.name}</div>
@@ -86,7 +87,7 @@ export default async function OfferPage({ params }: { params: Promise<{ id: stri
                       <span className="text-xs text-ink-400">нет в спецификации</span>
                     )}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="max-w-[360px] px-3 py-3">
                     <div className="leading-snug">{item.rawName}</div>
                     <div className="text-xs text-ink-400">
                       {item.article ?? "—"}
@@ -126,7 +127,7 @@ export default async function OfferPage({ params }: { params: Promise<{ id: stri
             })}
           </tbody>
         </table>
-      </Card>
+      </TableShell>
 
       {missing.length > 0 ? (
         <Card className="p-5">

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { SpecItem } from "@/lib/types";
 import { Badge } from "@/components/ui";
+import { SortTh, TableShell, theadClass, tfootClass, rowClass, totalsByUnit, useSort } from "@/components/table";
 import { money, nf } from "@/lib/format";
 
 const ALL = "__all__";
@@ -31,7 +32,7 @@ function Select({
   );
 }
 
-/** Спецификация объекта с фильтрами по зданию, разделу и системе. */
+/** Спецификация объекта: фильтры, поиск, сортировка по любой колонке и итоги по единицам. */
 export default function SpecTable({ items }: { items: SpecItem[] }) {
   const [building, setBuilding] = useState(ALL);
   const [section, setSection] = useState(ALL);
@@ -45,7 +46,7 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
   const sections = useMemo(() => uniq((i) => i.section), [items]);
   const systems = useMemo(() => uniq((i) => i.system), [items]);
 
-  const rows = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items.filter(
       (i) =>
@@ -59,10 +60,18 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
     );
   }, [items, building, section, system, query]);
 
-  const budget = rows.reduce((s, i) => s + (i.pricePlan ?? 0) * i.qtyPlan, 0);
+  const { sorted, sort, toggle } = useSort(filtered);
+
+  const budget = filtered.reduce((s, i) => s + (i.pricePlan ?? 0) * i.qtyPlan, 0);
+  const totals = totalsByUnit(filtered.map((i) => ({ unit: i.unit, qty: i.qtyPlan })));
   const showBuilding = buildings.length > 1;
   const showTag = items.some((i) => i.tag);
   const showCode = items.some((i) => i.code);
+  const showManufacturer = items.some((i) => i.manufacturer);
+  const showNote = items.some((i) => i.note);
+  const filterOn = building !== ALL || section !== ALL || system !== ALL || !!query.trim();
+
+  const columns = 2 + 1 + (showTag ? 1 : 0) + 1 + (showCode ? 1 : 0) + (showManufacturer ? 1 : 0) + (showBuilding ? 1 : 0);
 
   return (
     <div className="space-y-3">
@@ -76,32 +85,59 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        {filterOn ? (
+          <button
+            type="button"
+            onClick={() => {
+              setBuilding(ALL);
+              setSection(ALL);
+              setSystem(ALL);
+              setQuery("");
+            }}
+            className="text-sm text-brand-600 hover:underline"
+          >
+            сбросить
+          </button>
+        ) : null}
         <span className="text-sm text-ink-400">
-          Показано <b className="tabular text-ink-900">{rows.length}</b> из {items.length}
-          {budget > 0 ? ` · ${money(budget)}` : ""}
+          {filterOn ? (
+            <>
+              Показано <b className="tabular text-ink-900">{filtered.length}</b> из {items.length}
+            </>
+          ) : (
+            <>
+              Позиций: <b className="tabular text-ink-900">{items.length}</b>
+            </>
+          )}
         </span>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-ink-200 bg-white">
+      <TableShell>
         <table className="w-full min-w-[1000px] text-sm">
-          <thead className="border-b border-ink-200 bg-ink-50 text-left text-xs uppercase text-ink-400">
+          <thead className={theadClass}>
             <tr>
-              <th className="w-12 px-3 py-2 font-medium">№</th>
-              <th className="px-3 py-2 font-medium">Наименование</th>
-              {showTag ? <th className="px-3 py-2 font-medium">Тэг / опросный лист</th> : null}
-              <th className="px-3 py-2 font-medium">Тип, марка</th>
-              {showCode ? <th className="px-3 py-2 font-medium">Код продукции</th> : null}
-              <th className="px-3 py-2 font-medium">Поставщик</th>
-              {showBuilding ? <th className="px-3 py-2 font-medium">Здание</th> : null}
-              <th className="px-3 py-2 text-right font-medium">Кол-во</th>
-              <th className="px-3 py-2 font-medium">Примечание</th>
+              <th className="w-12 px-3 py-2 text-right font-medium" title="Номер строки на экране">
+                #
+              </th>
+              <SortTh label="Поз." sortKey="pos" sort={sort} toggle={toggle} className="w-16" />
+              <SortTh label="Наименование" sortKey="name" sort={sort} toggle={toggle} />
+              {showTag ? <SortTh label="Тэг / опросный лист" sortKey="tag" sort={sort} toggle={toggle} /> : null}
+              <SortTh label="Тип, марка" sortKey="article" sort={sort} toggle={toggle} />
+              {showCode ? <SortTh label="Код продукции" sortKey="code" sort={sort} toggle={toggle} /> : null}
+              {showManufacturer ? (
+                <SortTh label="Производитель" sortKey="manufacturer" sort={sort} toggle={toggle} />
+              ) : null}
+              {showBuilding ? <SortTh label="Здание" sortKey="building" sort={sort} toggle={toggle} /> : null}
+              <SortTh label="Кол-во" sortKey="qtyPlan" sort={sort} toggle={toggle} align="right" />
+              {showNote ? <th className="px-3 py-2 font-medium">Примечание</th> : null}
             </tr>
           </thead>
           <tbody>
-            {rows.map((i) => (
-              <tr key={i.id} className="border-b border-ink-100 align-top last:border-0 hover:bg-ink-50">
-                <td className="px-3 py-2 tabular text-ink-400">{i.pos ?? ""}</td>
-                <td className="px-3 py-2">
+            {sorted.map((i, idx) => (
+              <tr key={i.id} className={rowClass}>
+                <td className="px-3 py-2 text-right tabular text-ink-400">{idx + 1}</td>
+                <td className="px-3 py-2 tabular text-ink-600">{i.pos ?? "—"}</td>
+                <td className="max-w-[420px] px-3 py-2">
                   <div className="leading-snug">{i.name}</div>
                   {i.section ? <div className="mt-0.5 text-xs text-ink-400">{i.section}</div> : null}
                 </td>
@@ -111,23 +147,37 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
                     {i.datasheet ? <div className="text-xs text-ink-400">{i.datasheet}</div> : null}
                   </td>
                 ) : null}
-                <td className="px-3 py-2 font-medium">{i.article ?? "—"}</td>
+                <td className="max-w-[200px] px-3 py-2 font-medium">{i.article ?? "—"}</td>
                 {showCode ? <td className="px-3 py-2 tabular text-ink-600">{i.code ?? "—"}</td> : null}
-                <td className="px-3 py-2 text-ink-600">{i.manufacturer ?? "—"}</td>
-                {showBuilding ? (
-                  <td className="px-3 py-2 text-xs text-ink-600">{i.building ?? "—"}</td>
+                {showManufacturer ? (
+                  <td className="max-w-[180px] px-3 py-2 text-ink-600">{i.manufacturer ?? "—"}</td>
                 ) : null}
-                <td className="whitespace-nowrap px-3 py-2 text-right tabular">
-                  {nf.format(i.qtyPlan)} <span className="text-xs text-ink-400">{i.unit}</span>
+                {showBuilding ? (
+                  <td className="max-w-[160px] px-3 py-2 text-xs text-ink-600">{i.building ?? "—"}</td>
+                ) : null}
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular font-medium">
+                  {nf.format(i.qtyPlan)} <span className="text-xs font-normal text-ink-400">{i.unit}</span>
                 </td>
-                <td className="px-3 py-2 text-xs text-ink-400">
-                  {i.note ? <Badge tone="amber">{i.note}</Badge> : null}
-                </td>
+                {showNote ? (
+                  <td className="max-w-[160px] px-3 py-2 text-xs text-ink-400">
+                    {i.note ? <Badge tone="amber">{i.note}</Badge> : null}
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
+          <tfoot className={tfootClass}>
+            <tr>
+              <td colSpan={columns} className="px-3 py-2">
+                Итого: {filtered.length} позиций
+                {budget > 0 ? ` · ${money(budget)}` : ""}
+              </td>
+              <td className="whitespace-nowrap px-3 py-2 text-right tabular">{totals}</td>
+              {showNote ? <td /> : null}
+            </tr>
+          </tfoot>
         </table>
-      </div>
+      </TableShell>
     </div>
   );
 }
