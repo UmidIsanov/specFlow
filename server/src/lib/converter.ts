@@ -168,9 +168,12 @@ function plausible(result: ConverterResult, pages: number, mode: ConverterMode):
   const rows = result.items.length;
   if (mode !== "kp") return rows > 0;
   if (rows === 0) return false;
+  // таблица на N страниц не может состоять из одной строки — значит, прочиталась не вся
+  if (rows < pages) return false;
   // в КП у строки с количеством есть цена; если её нет у половины — колонка не прочитана
   const priced = result.items.filter((i) => (i.quantity ?? 0) > 0 && (i.price ?? 0) > 0).length;
   const withQty = result.items.filter((i) => (i.quantity ?? 0) > 0).length;
+  if (withQty > 0 && priced === 0) return false;
   if (withQty >= 3 && priced < withQty * 0.5) return false;
   // номера строк должны идти подряд
   const nums = result.items.map((i) => Number(i.pos)).filter((x) => Number.isInteger(x));
@@ -189,7 +192,9 @@ const RETRY_THINKING = 1024;
 // последняя ступень — сильная модель; дорого, поэтому только когда дешёвые не справились,
 // только для целых кусков (не постранично) и не больше двух раз на документ
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL ?? "gemini-pro-latest";
-const FALLBACK_MAX_PER_DOC = Number(process.env.GEMINI_FALLBACK_MAX ?? 2);
+const FALLBACK_MAX_PER_DOC = Number(process.env.GEMINI_FALLBACK_MAX ?? 10);
+// pro-модель работает только с размышлениями: с нулевым бюджетом отвечает 400
+const FALLBACK_THINKING = Number(process.env.GEMINI_FALLBACK_THINKING ?? 4096);
 type UsageSink = { requests: number; input: number; output: number; total: number; model: string };
 
 async function convertOne(
@@ -413,7 +418,9 @@ async function convertUncached(
     let lastErr: unknown = null;
     // ступени: дёшево → с размышлениями → сильная модель (с лимитом на документ)
     const steps: Array<{ thinking?: number; model?: string }> = [{}, { thinking: RETRY_THINKING }];
-    if (allowFallback && FALLBACK_MODEL && fallbackUsed < FALLBACK_MAX_PER_DOC) steps.push({ model: FALLBACK_MODEL });
+    if (allowFallback && FALLBACK_MODEL && fallbackUsed < FALLBACK_MAX_PER_DOC) {
+      steps.push({ model: FALLBACK_MODEL, thinking: FALLBACK_THINKING });
+    }
     for (const step of steps) {
       if (step.model) fallbackUsed++;
       try {
@@ -456,7 +463,7 @@ async function convertUncached(
     const single = await splitPdf(chunks[i], 1);
     const perPage: ConverterResult[] = [];
     for (let j = 0; j < single.chunks.length; j++) {
-      const r = await convertWithRetry(single.chunks[j], `${base} (стр. ${from + j}).pdf`, 1, false).catch(() => null);
+      const r = await convertWithRetry(single.chunks[j], `${base} (стр. ${from + j}).pdf`, 1).catch(() => null);
       if (r) perPage.push(r);
     }
     done();
