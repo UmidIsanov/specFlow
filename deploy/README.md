@@ -1,4 +1,4 @@
-# Установка «Сверки» на сервер
+# Установка «Позиции» на сервер
 
 ## Что нужно от сервера
 
@@ -16,8 +16,8 @@
 
 ```bash
 ssh root@АДРЕС_СЕРВЕРА
-git clone https://github.com/UmidIsanov/specFlow.git /opt/sverka
-DOMAIN=sverka.uz bash /opt/sverka/deploy/setup.sh
+git clone https://github.com/UmidIsanov/specFlow.git /opt/pozitsiya
+DOMAIN=pozitsiya.uz bash /opt/pozitsiya/deploy/setup.sh
 ```
 
 Скрипт поставит Node, Go, poppler, nginx и certbot, соберёт проект, пропишет три службы
@@ -26,14 +26,14 @@ systemd, выпустит сертификат и спросит пароль д
 После установки впишите ключ Gemini и перезапустите конвертер:
 
 ```bash
-nano /opt/sverka/converter/.env      # GEMINI_API_KEY=...
-systemctl restart sverka-converter
+nano /opt/pozitsiya/converter/.env      # GEMINI_API_KEY=...
+systemctl restart pozitsiya-converter
 ```
 
 ## Обновление
 
 ```bash
-bash /opt/sverka/deploy/update.sh
+bash /opt/pozitsiya/deploy/update.sh
 ```
 
 ## Как всё устроено
@@ -50,10 +50,10 @@ bash /opt/sverka/deploy/update.sh
 ## Повседневное
 
 ```bash
-systemctl status sverka-api            # состояние
-journalctl -u sverka-api -f            # журнал API
-journalctl -u sverka-converter -f      # журнал распознавания, с токенами
-systemctl restart sverka-web           # перезапуск
+systemctl status pozitsiya-api            # состояние
+journalctl -u pozitsiya-api -f            # журнал API
+journalctl -u pozitsiya-converter -f      # журнал распознавания, с токенами
+systemctl restart pozitsiya-web           # перезапуск
 ```
 
 ## Данные и резервная копия
@@ -66,10 +66,10 @@ systemctl restart sverka-web           # перезапуск
 Копия:
 
 ```bash
-tar czf ~/sverka-$(date +%F).tar.gz -C /opt/sverka server/prisma/dev.db server/data
+tar czf ~/pozitsiya-$(date +%F).tar.gz -C /opt/pozitsiya server/prisma/dev.db server/data
 ```
 
-Поставьте это в `crontab -e` строкой `0 3 * * * tar czf /root/sverka-$(date +\%F).tar.gz -C /opt/sverka server/prisma/dev.db server/data`.
+Поставьте это в `crontab -e` строкой `0 3 * * * tar czf /root/pozitsiya-$(date +\%F).tar.gz -C /opt/pozitsiya server/prisma/dev.db server/data`.
 
 ## Важно: входа по пользователям пока нет
 

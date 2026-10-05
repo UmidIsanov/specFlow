@@ -37,7 +37,7 @@ export function localOcrAvailable(): { available: boolean; reason?: string } {
 }
 
 async function renderPages(buf: Buffer, report: (done: number, total: number) => void): Promise<{ dir: string; files: string[] }> {
-  const dir = mkdtempSync(join(tmpdir(), "sverka-ocr-"));
+  const dir = mkdtempSync(join(tmpdir(), "pozitsiya-ocr-"));
   const pdf = join(dir, "doc.pdf");
   const { writeFileSync } = await import("node:fs");
   writeFileSync(pdf, buf);
@@ -305,7 +305,7 @@ function findDeclaredTotal(pages: OcrPage[]): number | undefined {
 /** Текст первой страницы — чтобы понять, что за документ, не распознавая его целиком. */
 export async function firstPageText(buf: Buffer): Promise<string> {
   if (!localOcrAvailable().available) return "";
-  const dir = mkdtempSync(join(tmpdir(), "sverka-kind-"));
+  const dir = mkdtempSync(join(tmpdir(), "pozitsiya-kind-"));
   try {
     const { writeFileSync } = await import("node:fs");
     const pdf = join(dir, "doc.pdf");

@@ -1,6 +1,6 @@
-# Сверка
+# Позиция
 
-**sverka.uz** — платформа для инженера слаботочных систем на объекте.
+**pozitsiya.uz** — платформа для инженера слаботочных систем на объекте.
 
 Один продукт для инженера на объекте — от чертежа до исполнительной документации:
 
@@ -9,7 +9,7 @@ PDF (в том числе скан) → спецификация → анали�
 ```
 
 Конвертер `pdf-spec-converter` (Go + Gemini) живёт внутри как движок распознавания сканов:
-«Сверка» сама определяет, есть ли у PDF текстовый слой, и либо разбирает его по сетке таблицы,
+«Позиция» сама определяет, есть ли у PDF текстовый слой, и либо разбирает его по сетке таблицы,
 либо отправляет в конвертер. Отдельная страница «PDF → Excel» тоже на месте.
 
 ## Что уже работает
@@ -108,7 +108,7 @@ PDF (в том числе скан) → спецификация → анали�
 ## Стек и структура
 
 ```
-sverka/
+pozitsiya/
 ├── web/         Next.js 15 (App Router) + TypeScript + Tailwind 4 — интерфейс, :3000
 ├── server/      Node.js + Express + TypeScript, Prisma + SQLite — API, :4000
 └── converter/   Go + Gemini — распознавание сканов и страница «PDF → Excel», :8137
@@ -151,7 +151,7 @@ npm run dev                          # api :4000 · web :3000 · converter :8137
 По отдельности: `npm run dev --prefix server`, `npm run dev --prefix web`, `npm run dev:converter`.
 
 **Из VS Code:** открыть папку проекта, нажать `Cmd+Shift+B` (Windows: `Ctrl+Shift+B`) — задача
-«Сверка: запустить всё» поднимет три сервиса в отдельных вкладках терминала. Остальные задачи —
+«Позиция: запустить всё» поднимет три сервиса в отдельных вкладках терминала. Остальные задачи —
 через Terminal → Run Task… Если машине не хватает памяти, вместо «Веб :3000» запускайте
 «Веб :3000 (production)» — он в разы легче dev-режима.
 
@@ -161,8 +161,8 @@ npm run dev                          # api :4000 · web :3000 · converter :8137
 и https, скрипты установки и обновления. Коротко: Ubuntu 24.04, 4 ГБ памяти, затем
 
 ```bash
-git clone https://github.com/UmidIsanov/specFlow.git /opt/sverka
-DOMAIN=sverka.uz bash /opt/sverka/deploy/setup.sh
+git clone https://github.com/UmidIsanov/specFlow.git /opt/pozitsiya
+DOMAIN=pozitsiya.uz bash /opt/pozitsiya/deploy/setup.sh
 ```
 
 **Старый сервер конвертера.** Конвертер деплоится из папки `converter/` этого репозитория — бинарник

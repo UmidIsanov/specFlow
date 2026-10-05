@@ -1,13 +1,13 @@
 # Интерфейс: Next.js в production. Слушает только localhost, наружу — через nginx.
 [Unit]
-Description=Сверка — веб
-After=network-online.target sverka-api.service
+Description=Позиция — веб
+After=network-online.target pozitsiya-api.service
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=sverka
-WorkingDirectory=/opt/sverka/web
+User=pozitsiya
+WorkingDirectory=/opt/pozitsiya/web
 Environment=NODE_ENV=production
 Environment=PORT=3000
 ExecStart=/usr/bin/npm start

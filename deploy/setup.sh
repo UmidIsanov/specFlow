@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Первая установка «Сверки» на чистый сервер (Ubuntu 24.04).
+# Первая установка «Позиции» на чистый сервер (Ubuntu 24.04).
 # Запускать от root: bash deploy/setup.sh
 set -euo pipefail
 
-DOMAIN="${DOMAIN:-sverka.uz}"
+DOMAIN="${DOMAIN:-pozitsiya.uz}"
 REPO="${REPO:-https://github.com/UmidIsanov/specFlow.git}"
-DIR=/opt/sverka
+DIR=/opt/pozitsiya
 
 echo "→ пакеты"
 apt-get update -qq
@@ -14,9 +14,9 @@ curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null
 apt-get install -y -qq nodejs
 
 echo "→ пользователь и код"
-id sverka &>/dev/null || useradd --system --create-home --home-dir "$DIR" --shell /usr/sbin/nologin sverka
+id pozitsiya &>/dev/null || useradd --system --create-home --home-dir "$DIR" --shell /usr/sbin/nologin pozitsiya
 [ -d "$DIR/.git" ] || git clone -q "$REPO" "$DIR"
-chown -R sverka:sverka "$DIR"
+chown -R pozitsiya:pozitsiya "$DIR"
 
 echo "→ настройки"
 if [ ! -f "$DIR/server/.env" ]; then
@@ -33,19 +33,19 @@ if [ ! -f "$DIR/converter/.env" ]; then
 fi
 # адрес API для браузера — тот же домен, nginx разведёт /api
 echo "NEXT_PUBLIC_API_URL=https://$DOMAIN" > "$DIR/web/.env.production"
-chown -R sverka:sverka "$DIR"
+chown -R pozitsiya:pozitsiya "$DIR"
 
 echo "→ сборка"
-sudo -u sverka bash "$DIR/deploy/build.sh"
+sudo -u pozitsiya bash "$DIR/deploy/build.sh"
 
 echo "→ сервисы"
-cp "$DIR"/deploy/sverka-*.service /etc/systemd/system/
+cp "$DIR"/deploy/pozitsiya-*.service /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now sverka-converter sverka-api sverka-web
+systemctl enable --now pozitsiya-converter pozitsiya-api pozitsiya-web
 
 echo "→ nginx"
-sed "s/sverka\.uz/$DOMAIN/g" "$DIR/deploy/nginx.conf" > /etc/nginx/sites-available/sverka
-ln -sf /etc/nginx/sites-available/sverka /etc/nginx/sites-enabled/sverka
+sed "s/pozitsiya\.uz/$DOMAIN/g" "$DIR/deploy/nginx.conf" > /etc/nginx/sites-available/pozitsiya
+ln -sf /etc/nginx/sites-available/pozitsiya /etc/nginx/sites-enabled/pozitsiya
 rm -f /etc/nginx/sites-enabled/default
 [ -f /etc/nginx/.htpasswd ] || { echo "   задайте пароль для входа:"; htpasswd -c /etc/nginx/.htpasswd oybek; }
 # certbot сам перепишет конфиг под https; до этого nginx не стартует без сертификата
@@ -54,5 +54,5 @@ nginx -t && systemctl reload nginx
 
 echo
 echo "✅ Готово: https://$DOMAIN"
-echo "   журнал:   journalctl -u sverka-api -f"
+echo "   журнал:   journalctl -u pozitsiya-api -f"
 echo "   обновить: bash $DIR/deploy/update.sh"

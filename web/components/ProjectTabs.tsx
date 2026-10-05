@@ -7,7 +7,7 @@ const TABS = [
   { href: "", label: "Сводка" },
   { href: "/spec", label: "Спецификация" },
   { href: "/offers", label: "Анализ КП" },
-  { href: "/audit", label: "КП ↔ заявка" },
+  { href: "/audit", label: "Сверка с заявкой" },
   { href: "/supply", label: "Поставки и склад" },
   { href: "/acts", label: "Акты и ИТД" },
 ];

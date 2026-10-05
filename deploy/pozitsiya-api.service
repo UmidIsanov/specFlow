@@ -1,14 +1,14 @@
 # API: Express + Prisma/SQLite. Слушает только localhost, наружу — через nginx.
 [Unit]
-Description=Сверка — API
-After=network-online.target sverka-converter.service
+Description=Позиция — API
+After=network-online.target pozitsiya-converter.service
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=sverka
-WorkingDirectory=/opt/sverka/server
-EnvironmentFile=/opt/sverka/server/.env
+User=pozitsiya
+WorkingDirectory=/opt/pozitsiya/server
+EnvironmentFile=/opt/pozitsiya/server/.env
 ExecStart=/usr/bin/node dist/index.js
 Restart=always
 RestartSec=5

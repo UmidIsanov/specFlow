@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Обновление до свежей версии: bash /opt/sverka/deploy/update.sh
+# Обновление до свежей версии: bash /opt/pozitsiya/deploy/update.sh
 set -euo pipefail
-DIR=/opt/sverka
+DIR=/opt/pozitsiya
 cd "$DIR"
 
 echo "→ забираю изменения"
-sudo -u sverka git pull --ff-only
+sudo -u pozitsiya git pull --ff-only
 
 echo "→ сборка"
-sudo -u sverka bash "$DIR/deploy/build.sh"
+sudo -u pozitsiya bash "$DIR/deploy/build.sh"
 
 echo "→ перезапуск"
-cp "$DIR"/deploy/sverka-*.service /etc/systemd/system/
+cp "$DIR"/deploy/pozitsiya-*.service /etc/systemd/system/
 systemctl daemon-reload
-systemctl restart sverka-converter sverka-api sverka-web
+systemctl restart pozitsiya-converter pozitsiya-api pozitsiya-web
 sleep 3
-systemctl --no-pager --lines=0 status sverka-converter sverka-api sverka-web | grep -E "●|Active:"
+systemctl --no-pager --lines=0 status pozitsiya-converter pozitsiya-api pozitsiya-web | grep -E "●|Active:"
 echo "✅ обновлено"
