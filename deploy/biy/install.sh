@@ -19,8 +19,7 @@ if [ -n "$MEM_MB" ] && [ "$MEM_MB" -lt 1800 ]; then
 fi
 
 echo "== 2. Зависимости API =="
-npm install --omit=dev --prefix server --no-audit --fund=false
-npm install --prefix server --no-audit --fund=false   # нужен tsc для сборки
+npm install --prefix server --no-audit --fund=false
 
 echo "== 3. База данных =="
 export DATABASE_URL="file:$ROOT/server/prisma/dev.db"

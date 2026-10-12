@@ -33,6 +33,16 @@ else
     echo "   ⚠️  Папка $LEGACY не найдена — пропускаю"
 fi
 
+# Если 8137 всё ещё занят — значит старую программу держит не app.pid,
+# а что-то другое (systemd, cron). Лучше остановиться, чем поднять половину:
+# пока шлюз не встал, сайт продолжает работать по-старому.
+if (ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep -q ":8137 "; then
+    echo "❌ Порт 8137 всё ещё занят старой программой."
+    echo "   Найдите, кто её держит:  ss -ltnp | grep 8137"
+    echo "   Остановите и повторите. Сайт сейчас работает как раньше — ничего не сломано."
+    exit 1
+fi
+
 echo "== 2. Сервисы «Позиции» =="
 export DATABASE_URL="file:$ROOT/server/prisma/dev.db"
 run converter env PORT=8139 FRONTEND_DIST=/nonexistent "$ROOT/converter/converter-go"
