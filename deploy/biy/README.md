@@ -37,32 +37,39 @@ cd pozitsiya
 bash deploy/biy/check.sh        # посмотреть, что умеет сервер
 cp ~/converter/.env converter/.env   # ключ Gemini — тот же, что у старой программы
 bash deploy/biy/install.sh      # зависимости и сборка, 5–10 минут
-bash deploy/biy/start.sh        # запуск
+bash deploy/biy/pm2-start.sh    # запуск
 bash deploy/biy/status.sh       # проверка: везде должно быть 200
 ```
 
-## Автозапуск после перезагрузки
+## Процессами управляет PM2
 
-В `crontab -e` строку старой программы нужно заменить, иначе после перезагрузки
-она снова займёт 8137 и подерётся со шлюзом:
+На этом сервере программы живут под PM2 — там же, где `botlog` и `diamond`.
+`pm2-start.sh` переставляет старый конвертер на 8138 (`pm2 restart … --update-env`
+с `PORT=8138`), добавляет четыре сервиса «Позиции» из `pm2.config.cjs` и делает
+`pm2 save`. Чужие программы в PM2 он не трогает.
+
+Полезное:
 
 ```
-@reboot sleep 20 && bash ~/pozitsiya/deploy/biy/start.sh >> ~/pozitsiya/logs/boot.log 2>&1
+pm2 list                  что сейчас работает
+pm2 logs poz-api          логи одной части
+pm2 restart poz-web       перезапустить одну часть
 ```
 
-`start.sh` сам поднимает и старую программу на 8138 — отдельная строка для неё
-больше не нужна.
+Если после перезагрузки сервера ничего не поднялось — значит у PM2 не настроено
+воскрешение. Лечится одной командой с правами администратора:
+`pm2 startup` и дальше то, что она подскажет.
 
 ## Обновление
 
 ```bash
-cd ~/pozitsiya && git pull && bash deploy/biy/install.sh && bash deploy/biy/start.sh
+cd ~/pozitsiya && git pull && bash deploy/biy/install.sh && bash deploy/biy/pm2-start.sh
 ```
 
 ## Как всё вернуть как было
 
 ```bash
-bash ~/pozitsiya/deploy/biy/stop.sh
+bash ~/pozitsiya/deploy/biy/pm2-stop.sh
 ```
 
 Старый конвертер снова встанет на 8137, и `spec.biy.kz` будет открывать его
