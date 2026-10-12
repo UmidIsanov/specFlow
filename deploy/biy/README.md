@@ -77,7 +77,7 @@ bash ~/pozitsiya/deploy/biy/stop.sh
 # на своём компьютере
 cd ~/Documents/specflow/web
 BASE_PATH=/pozitsiya NEXT_PUBLIC_API_URL=/pozitsiya-api npm run build
-cp -r .next/static .next/standalone/.next/static
+
 tar czf ~/Desktop/web-build.tgz -C .next standalone
 # затем положить архив на сервер и распаковать:
 #   tar xzf web-build.tgz -C ~/pozitsiya/web/.next

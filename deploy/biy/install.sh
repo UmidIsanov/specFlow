@@ -30,7 +30,6 @@ echo "== 4. Сборка API и интерфейса =="
 npm run build --prefix server
 npm install --prefix web --no-audit --fund=false
 BASE_PATH=/pozitsiya NEXT_PUBLIC_API_URL=/pozitsiya-api npm run build --prefix web
-cp -r web/.next/static web/.next/standalone/.next/static
 echo "✅ Интерфейс собран"
 
 echo "== 5. Ключ Gemini =="
