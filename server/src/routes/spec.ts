@@ -253,9 +253,84 @@ specRouter.patch(
   })
 );
 
+/**
+ * Сколько следов оставили позиции: приход, списание, акты. Пока они есть,
+ * удалять позицию нельзя — иначе в поставках и актах останутся ссылки в никуда.
+ */
+async function dependents(ids: string[]) {
+  const where = { specItemId: { in: ids } };
+  const [deliveries, acts, moves, deviations] = await Promise.all([
+    prisma.deliveryItem.count({ where }),
+    prisma.workActItem.count({ where }),
+    prisma.stockMove.count({ where }),
+    prisma.deviation.count({ where }),
+  ]);
+  return { deliveries, acts, moves, deviations };
+}
+
+function dependentsMessage(d: Awaited<ReturnType<typeof dependents>>) {
+  const parts: string[] = [];
+  if (d.deliveries) parts.push(`приход: ${d.deliveries}`);
+  if (d.acts) parts.push(`в актах: ${d.acts}`);
+  if (d.moves) parts.push(`движений по складу: ${d.moves}`);
+  if (d.deviations) parts.push(`отклонений: ${d.deviations}`);
+  return parts.join(", ");
+}
+
+/** Удаление позиций: тело { ids } — выбранные, пустое — вся спецификация объекта. */
+specRouter.delete(
+  "/projects/:projectId/spec",
+  ah(async (req, res) => {
+    const { ids, force } = z
+      .object({ ids: z.array(z.string()).optional(), force: z.boolean().optional() })
+      .parse(req.body ?? {});
+
+    const where = ids?.length
+      ? { id: { in: ids }, projectId: req.params.projectId }
+      : { projectId: req.params.projectId };
+
+    const targets = await prisma.specItem.findMany({ where, select: { id: true } });
+    if (targets.length === 0) return res.json({ deleted: 0 });
+    const targetIds = targets.map((t) => t.id);
+
+    const dep = await dependents(targetIds);
+    const blocked = dep.deliveries + dep.acts + dep.moves + dep.deviations;
+    if (blocked > 0 && !force) {
+      throw new HttpError(
+        409,
+        `По этим позициям уже есть данные (${dependentsMessage(dep)}). ` +
+          `Удаление сотрёт и их — подтвердите ещё раз, если это то, что нужно.`
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Строки КП не удаляем — они просто перестают быть привязаны к спецификации
+      // и попадут в «вне проекта». Сами предложения поставщиков трогать нельзя.
+      await tx.offerItem.updateMany({
+        where: { specItemId: { in: targetIds } },
+        data: { specItemId: null },
+      });
+      if (blocked > 0) {
+        await tx.deliveryItem.deleteMany({ where: { specItemId: { in: targetIds } } });
+        await tx.workActItem.deleteMany({ where: { specItemId: { in: targetIds } } });
+        await tx.stockMove.deleteMany({ where: { specItemId: { in: targetIds } } });
+        await tx.deviation.deleteMany({ where: { specItemId: { in: targetIds } } });
+      }
+      await tx.specItem.deleteMany({ where: { id: { in: targetIds } } });
+    });
+
+    res.json({ deleted: targetIds.length });
+  })
+);
+
 specRouter.delete(
   "/spec-items/:id",
   ah(async (req, res) => {
+    const dep = await dependents([req.params.id]);
+    if (dep.deliveries + dep.acts + dep.moves + dep.deviations > 0) {
+      throw new HttpError(409, `По позиции уже есть данные (${dependentsMessage(dep)}) — сначала уберите их.`);
+    }
+    await prisma.offerItem.updateMany({ where: { specItemId: req.params.id }, data: { specItemId: null } });
     await prisma.specItem.delete({ where: { id: req.params.id } });
     res.status(204).end();
   })

@@ -387,6 +387,15 @@ offersRouter.patch(
   })
 );
 
+/** Сброс анализа КП: удаляет все предложения объекта вместе с их строками. */
+offersRouter.delete(
+  "/projects/:projectId/offers",
+  ah(async (req, res) => {
+    const { count } = await prisma.offer.deleteMany({ where: { projectId: req.params.projectId } });
+    res.json({ deleted: count });
+  })
+);
+
 offersRouter.delete(
   "/offers/:id",
   ah(async (req, res) => {

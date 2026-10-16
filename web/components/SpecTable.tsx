@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import type { SpecItem } from "@/lib/types";
 import { Badge } from "@/components/ui";
 import { SortTh, TableShell, theadClass, tfootClass, rowClass, totalsByUnit, useSort } from "@/components/table";
+import DangerButton from "@/components/DangerButton";
+import { PUBLIC_API } from "@/lib/api";
 import { money, nf } from "@/lib/format";
 
 const ALL = "__all__";
@@ -32,12 +34,14 @@ function Select({
   );
 }
 
-/** Спецификация объекта: фильтры, поиск, сортировка по любой колонке и итоги по единицам. */
-export default function SpecTable({ items }: { items: SpecItem[] }) {
+/** Спецификация объекта: фильтры, поиск, сортировка, итоги по единицам и удаление лишнего. */
+export default function SpecTable({ items, projectId }: { items: SpecItem[]; projectId: string }) {
   const [building, setBuilding] = useState(ALL);
   const [section, setSection] = useState(ALL);
   const [system, setSystem] = useState(ALL);
+  const [doc, setDoc] = useState(ALL);
   const [query, setQuery] = useState("");
+  const [picked, setPicked] = useState<Set<string>>(new Set());
 
   const uniq = (get: (i: SpecItem) => string | null) =>
     [...new Set(items.map(get).filter((v): v is string => !!v))].sort();
@@ -45,6 +49,7 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
   const buildings = useMemo(() => uniq((i) => i.building), [items]);
   const sections = useMemo(() => uniq((i) => i.section), [items]);
   const systems = useMemo(() => uniq((i) => i.system), [items]);
+  const docs = useMemo(() => uniq((i) => i.docRef), [items]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -53,12 +58,13 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
         (building === ALL || i.building === building) &&
         (section === ALL || i.section === section) &&
         (system === ALL || i.system === system) &&
+        (doc === ALL || i.docRef === doc) &&
         (!q ||
           `${i.name} ${i.article ?? ""} ${i.code ?? ""} ${i.tag ?? ""} ${i.datasheet ?? ""}`
             .toLowerCase()
             .includes(q))
     );
-  }, [items, building, section, system, query]);
+  }, [items, building, section, system, doc, query]);
 
   const { sorted, sort, toggle } = useSort(filtered);
 
@@ -69,9 +75,39 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
   const showCode = items.some((i) => i.code);
   const showManufacturer = items.some((i) => i.manufacturer);
   const showNote = items.some((i) => i.note);
-  const filterOn = building !== ALL || section !== ALL || system !== ALL || !!query.trim();
+  const filterOn = building !== ALL || section !== ALL || system !== ALL || doc !== ALL || !!query.trim();
 
-  const columns = 2 + 1 + (showTag ? 1 : 0) + 1 + (showCode ? 1 : 0) + (showManufacturer ? 1 : 0) + (showBuilding ? 1 : 0);
+  // Выделять можно только то, что сейчас на экране: иначе легко удалить
+  // спрятанное фильтром и не заметить.
+  const shownIds = filtered.map((i) => i.id);
+  const pickedShown = shownIds.filter((id) => picked.has(id));
+  const allShownPicked = shownIds.length > 0 && pickedShown.length === shownIds.length;
+
+  const toggleOne = (id: string) =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleAllShown = () =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (allShownPicked) shownIds.forEach((id) => next.delete(id));
+      else shownIds.forEach((id) => next.add(id));
+      return next;
+    });
+
+  const removeSelected = (force: boolean) =>
+    fetch(`${PUBLIC_API}/api/projects/${projectId}/spec`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: pickedShown, force }),
+    });
+
+  const columns =
+    3 + 1 + (showTag ? 1 : 0) + 1 + (showCode ? 1 : 0) + (showManufacturer ? 1 : 0) + (showBuilding ? 1 : 0);
 
   return (
     <div className="space-y-3">
@@ -79,6 +115,7 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
         <Select value={building} onChange={setBuilding} options={buildings} allLabel="Все здания" />
         <Select value={section} onChange={setSection} options={sections} allLabel="Все разделы" />
         <Select value={system} onChange={setSystem} options={systems} allLabel="Все системы" />
+        <Select value={doc} onChange={setDoc} options={docs} allLabel="Все документы" />
         <input
           className="input w-56"
           placeholder="Поиск по названию, тэгу, марке, коду…"
@@ -92,6 +129,7 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
               setBuilding(ALL);
               setSection(ALL);
               setSystem(ALL);
+              setDoc(ALL);
               setQuery("");
             }}
             className="text-sm text-brand-600 hover:underline"
@@ -112,10 +150,39 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
         </span>
       </div>
 
+      {pickedShown.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm">
+          <span>
+            Выбрано <b className="tabular">{pickedShown.length}</b>{" "}
+            {pickedShown.length === 1 ? "позиция" : "позиций"}
+          </span>
+          <DangerButton
+            size="small"
+            confirm={`Удалить ${pickedShown.length} позиций из спецификации? Отменить нельзя.`}
+            request={removeSelected}
+          >
+            Удалить выбранное
+          </DangerButton>
+          <button type="button" onClick={() => setPicked(new Set())} className="text-ink-500 hover:underline">
+            снять выделение
+          </button>
+        </div>
+      ) : null}
+
       <TableShell>
         <table className="w-full min-w-[1000px] text-sm">
           <thead className={theadClass}>
             <tr>
+              <th className="w-9 px-3 py-2">
+                <input
+                  type="checkbox"
+                  checked={allShownPicked}
+                  onChange={toggleAllShown}
+                  aria-label="Выбрать все показанные позиции"
+                  title="Выбрать все показанные позиции"
+                  className="align-middle"
+                />
+              </th>
               <th className="w-12 px-3 py-2 text-right font-medium" title="Номер строки на экране">
                 #
               </th>
@@ -135,6 +202,15 @@ export default function SpecTable({ items }: { items: SpecItem[] }) {
           <tbody>
             {sorted.map((i, idx) => (
               <tr key={i.id} className={rowClass}>
+                <td className="px-3 py-2">
+                  <input
+                    type="checkbox"
+                    checked={picked.has(i.id)}
+                    onChange={() => toggleOne(i.id)}
+                    aria-label={`Выбрать: ${i.name}`}
+                    className="align-middle"
+                  />
+                </td>
                 <td className="px-3 py-2 text-right tabular text-ink-400">{idx + 1}</td>
                 <td className="px-3 py-2 tabular text-ink-600">{i.pos ?? "—"}</td>
                 <td className="max-w-[420px] px-3 py-2">

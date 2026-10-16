@@ -5,6 +5,8 @@ import UploadForm from "@/components/UploadForm";
 import AddSupplierForm from "@/components/AddSupplierForm";
 import ComparisonMatrix from "@/components/ComparisonMatrix";
 import ExportButton from "@/components/ExportButton";
+import ResetOffersButton from "@/components/ResetOffersButton";
+import DeleteOfferButton from "@/components/DeleteOfferButton";
 import { compactMoney, date } from "@/lib/format";
 
 export default async function OffersPage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,6 +45,13 @@ export default async function OffersPage({ params }: { params: Promise<{ id: str
         <Empty title="КП не загружены" hint="Загрузите хотя бы одно предложение, чтобы получить технический анализ" />
       ) : (
         <>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-ink-600">
+            <span>
+              Загружено КП: <b className="tabular">{offers.length}</b>
+            </span>
+            <ResetOffersButton projectId={id} count={offers.length} />
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {offers.map((o) => (
               <Card key={o.id} className="p-4">
@@ -54,9 +63,10 @@ export default async function OffersPage({ params }: { params: Promise<{ id: str
                       {o.deliveryDays ? ` · срок ${o.deliveryDays} дн.` : ""}
                     </div>
                   </div>
-                  <div className="flex gap-1.5">
+                  <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
                     <ExportButton path={`/offers/${o.id}/export.xlsx`} label="Excel" />
                     <LinkButton href={`/projects/${id}/offers/${o.id}`}>Анализ</LinkButton>
+                    <DeleteOfferButton offerId={o.id} supplier={o.supplier.name} />
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">

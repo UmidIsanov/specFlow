@@ -4,6 +4,7 @@ import { Empty, Badge } from "@/components/ui";
 import UploadForm from "@/components/UploadForm";
 import SpecTable from "@/components/SpecTable";
 import ExportButton from "@/components/ExportButton";
+import ClearSpecButton from "@/components/ClearSpecButton";
 
 const SYSTEMS = ["ПС", "СОУЭ", "СКС", "СОТ", "СКУД", "АПТ", "ПЕРИМЕТР"];
 
@@ -37,6 +38,7 @@ export default async function SpecPage({ params }: { params: Promise<{ id: strin
         <>
           <div className="flex flex-wrap items-center gap-2 text-sm text-ink-600">
             <ExportButton path={`/projects/${id}/export/spec.xlsx`} label="Спецификация в Excel" />
+            <ClearSpecButton projectId={id} count={items.length} />
             <span>
               Позиций: <b className="tabular">{items.length}</b>
             </span>
@@ -51,7 +53,7 @@ export default async function SpecPage({ params }: { params: Promise<{ id: strin
               </Badge>
             ))}
           </div>
-          <SpecTable items={items} />
+          <SpecTable items={items} projectId={id} />
         </>
       )}
     </div>
