@@ -1,5 +1,6 @@
 import type { AuditScope } from "@/lib/types";
 import { Card, Badge } from "@/components/ui";
+import { Abbr } from "@/components/Abbr";
 import { nf } from "@/lib/format";
 
 /**
@@ -39,7 +40,7 @@ export default function ScopeView({ scope, currency }: { scope: AuditScope; curr
           <h3 className="font-semibold">КП предлагает</h3>
           <div className="mt-3 flex flex-wrap gap-2">
             <Badge tone={systems.length === plc.reduce((s, p) => s + p.qty, 0) ? "green" : "amber"}>
-              систем ПЛК: {systems.length}
+              систем <Abbr term="ПЛК" />: {systems.length}
             </Badge>
             <Badge tone={scope.offer.hmi === hmi.reduce((s, p) => s + p.qty, 0) ? "green" : "amber"}>
               HMI: {scope.offer.hmi}

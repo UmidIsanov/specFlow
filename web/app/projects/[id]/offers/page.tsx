@@ -24,7 +24,7 @@ export default async function OffersPage({ params }: { params: Promise<{ id: str
           action={`/api/projects/${id}/offers/import`}
           pdfAction={`/api/projects/${id}/offers/import-pdf`}
           title="Загрузить КП поставщика"
-          hint="Excel или PDF от поставщика — в том числе скан. Позиции сразу сопоставляются со спецификацией, а если в них есть тэги — сверяются с заявкой."
+          hint="Excel или PDF от поставщика — в том числе скан. Позиции сразу сопоставляются с заявкой, а если в них есть тэги — сверяются по теговым номерам."
           submitLabel="Загрузить и проанализировать"
           fields={[
             {

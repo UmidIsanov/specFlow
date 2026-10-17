@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { AuditLine, TagAudit } from "@/lib/types";
 import { Card, Badge } from "@/components/ui";
 import { TableShell, theadClass, rowClass } from "@/components/table";
+import { AbbrText } from "@/components/Abbr";
 import { nf } from "@/lib/format";
 
 const VERDICT: Record<AuditLine["verdict"], { label: string; tone: "green" | "amber" | "red" | "gray" }> = {
@@ -134,7 +135,9 @@ export default function AuditTables({ audit }: { audit: TagAudit }) {
           </Card>
 
           <Card className="p-5">
-            <h3 className="font-semibold">Опросный лист в КП не совпал с заявкой</h3>
+            <h3 className="font-semibold">
+              <AbbrText>Опросный лист в КП не совпал с заявкой</AbbrText>
+            </h3>
             {issues.filter((l) => l.datasheetMismatch > 0).length === 0 ? (
               <p className="mt-2 text-sm text-ink-400">Расхождений нет.</p>
             ) : (

@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 import type { Comparison, PlanFact, WorkAct, Deviation } from "@/lib/types";
 import { Card, Stat, Progress, LinkButton, Badge } from "@/components/ui";
+import { Abbr, AbbrText } from "@/components/Abbr";
 import { compactMoney, date, nf, pct } from "@/lib/format";
 
 export default async function ProjectDashboard({ params }: { params: Promise<{ id: string }> }) {
@@ -37,7 +38,7 @@ export default async function ProjectDashboard({ params }: { params: Promise<{ i
           hint="есть остаток для монтажа"
         />
         <Stat
-          label="Спорных позиций в КП"
+          label={<AbbrText>Спорных позиций в КП</AbbrText>}
           value={risky}
           hint="аналоги и непонятные позиции"
           tone={risky > 0 ? "danger" : "good"}
@@ -125,7 +126,7 @@ export default async function ProjectDashboard({ params }: { params: Promise<{ i
                 <li key={a.id} className="flex items-center justify-between gap-3 py-2">
                   <div>
                     <div className="text-sm font-medium">
-                      {a.number ?? "б/н"} · {a.system}
+                      {a.number ?? "б/н"} · <Abbr term={a.system} />
                     </div>
                     <div className="text-xs text-ink-400">{a.location ?? "—"}</div>
                   </div>

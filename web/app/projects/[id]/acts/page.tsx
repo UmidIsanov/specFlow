@@ -5,6 +5,7 @@ import { Card, Badge, Empty, Stat } from "@/components/ui";
 import LineItemsForm from "@/components/LineItemsForm";
 import SignActButton from "@/components/SignActButton";
 import DeviationForm from "@/components/DeviationForm";
+import { Abbr, AbbrText } from "@/components/Abbr";
 import { date, nf } from "@/lib/format";
 
 const KIND_LABEL: Record<Deviation["kind"], string> = {
@@ -45,7 +46,10 @@ export default async function ActsPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {acts.length === 0 ? (
-        <Empty title="Актов пока нет" hint="Создайте акт установки — объёмы уйдут в факт, а ТМЦ спишутся со склада" />
+        <Empty
+          title="Актов пока нет"
+          hint={<AbbrText>Создайте акт установки — объёмы уйдут в факт, а ТМЦ спишутся со склада</AbbrText>}
+        />
       ) : (
         <div className="space-y-3">
           {acts.map((a) => (
@@ -53,7 +57,7 @@ export default async function ActsPage({ params }: { params: Promise<{ id: strin
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="font-medium">
-                    Акт {a.number ?? "б/н"} · {a.system}
+                    Акт {a.number ?? "б/н"} · <Abbr term={a.system} />
                   </div>
                   <div className="text-sm text-ink-400">
                     {a.location ?? "участок не указан"} · {date(a.date)}
@@ -89,7 +93,9 @@ export default async function ActsPage({ params }: { params: Promise<{ id: strin
       )}
 
       <div>
-        <h2 className="mb-3 text-base font-semibold">Отклонения от проекта (для ИТД)</h2>
+        <h2 className="mb-3 text-base font-semibold">
+          <AbbrText>Отклонения от проекта (для ИТД)</AbbrText>
+        </h2>
         {deviations.length === 0 ? (
           <Empty title="Отклонений нет" hint="Исполнительная формируется строго по проекту" />
         ) : (

@@ -7,7 +7,7 @@ import { VerdictBadge } from "@/components/ui";
 import { TableShell, rowClass } from "@/components/table";
 import { compactMoney, nf } from "@/lib/format";
 
-/** Матрица «спецификация × КП»: строка проекта, колонка — что предложил каждый поставщик. */
+/** Матрица «заявка × КП»: строка проекта, колонка — что предложил каждый поставщик. */
 export default function ComparisonMatrix({ data, projectId }: { data: Comparison; projectId: string }) {
   const [onlyProblems, setOnlyProblems] = useState(false);
 
@@ -32,7 +32,7 @@ export default function ComparisonMatrix({ data, projectId }: { data: Comparison
         </label>
         {data.specRowCount > data.specCount ? (
           <span className="text-xs text-ink-400">
-            {data.specRowCount} строк спецификации сведены в {data.specCount} закупочных позиций
+            {data.specRowCount} строк заявки сведены в {data.specCount} закупочных позиций
           </span>
         ) : null}
       </div>

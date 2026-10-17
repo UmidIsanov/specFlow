@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import type { Project } from "@/lib/types";
 import { Card, PageHeader, Empty } from "@/components/ui";
 import CreateProjectForm from "@/components/CreateProjectForm";
+import { AbbrText } from "@/components/Abbr";
 import DeleteProjectButton from "@/components/DeleteProjectButton";
 import { date } from "@/lib/format";
 
@@ -13,12 +14,12 @@ export default async function Home() {
     <>
       <PageHeader
         title="Объекты"
-        subtitle="Спецификация → анализ КП → поставки → склад → исполнительная документация"
+        subtitle={<AbbrText>Заявка → анализ КП → поставки → склад → исполнительная документация</AbbrText>}
         actions={<CreateProjectForm />}
       />
 
       {projects.length === 0 ? (
-        <Empty title="Объектов пока нет" hint="Создайте объект и загрузите спецификацию из Excel" />
+        <Empty title="Объектов пока нет" hint="Создайте объект и загрузите заявку из Excel" />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {projects.map((p) => (

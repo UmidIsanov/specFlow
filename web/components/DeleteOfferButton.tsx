@@ -3,7 +3,7 @@
 import DangerButton from "@/components/DangerButton";
 import { PUBLIC_API } from "@/lib/api";
 
-/** Убрать одно предложение поставщика — остальные и спецификация не тронуты. */
+/** Убрать одно предложение поставщика — остальные и заявка не тронуты. */
 export default function DeleteOfferButton({ offerId, supplier }: { offerId: string; supplier: string }) {
   return (
     <DangerButton

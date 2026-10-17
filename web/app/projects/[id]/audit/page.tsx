@@ -5,6 +5,7 @@ import AuditTables from "@/components/AuditTables";
 import OfferSwitcher from "@/components/OfferSwitcher";
 import ScopeView from "@/components/ScopeView";
 import ExportButton from "@/components/ExportButton";
+import { Abbr, AbbrText } from "@/components/Abbr";
 import { nf } from "@/lib/format";
 
 export default async function AuditPage({
@@ -24,7 +25,7 @@ export default async function AuditPage({
     return (
       <Empty
         title="Нечего сверять"
-        hint="Загрузите заявку в разделе «Спецификация» и коммерческое предложение в разделе «Анализ КП»"
+        hint="Загрузите заявку в разделе «Заявка» и коммерческое предложение в разделе «Анализ КП»"
       />
     );
   }
@@ -43,7 +44,9 @@ export default async function AuditPage({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">
-              {byScope ? "Сверка КП с заявкой по составу систем" : "Сверка КП с заявкой по теговым номерам"}
+              <AbbrText>
+                {byScope ? "Сверка КП с заявкой по составу систем" : "Сверка КП с заявкой по теговым номерам"}
+              </AbbrText>
             </h2>
             <p className="mt-0.5 text-sm text-ink-400">
               {offer.supplier} · {offer.number ?? "б/н"} · {offer.lines} строк, {nf.format(offer.qtyTotal)} ед.,{" "}
@@ -100,7 +103,9 @@ export default async function AuditPage({
             <Badge tone="green">совпало полностью: {audit.lines.filter((l) => l.verdict === "MATCH").length}</Badge>
             <Badge tone="amber">частично вне заявки: {summary.linesPartial}</Badge>
             <Badge tone="red">целиком вне заявки: {summary.linesOutside}</Badge>
-            <Badge tone="gray">без тэгов, только по ОЛ: {summary.linesWithoutTags}</Badge>
+            <Badge tone="gray">
+              без тэгов, только по <Abbr term="ОЛ" />: {summary.linesWithoutTags}
+            </Badge>
           </div>
 
           <AuditTables audit={audit} />

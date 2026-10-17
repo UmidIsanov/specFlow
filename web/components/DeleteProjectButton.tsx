@@ -10,7 +10,7 @@ export default function DeleteProjectButton({ projectId, name }: { projectId: st
   const [busy, setBusy] = useState(false);
 
   async function remove() {
-    if (!confirm(`Удалить объект «${name}» вместе со спецификацией, КП, поставками и актами?`)) return;
+    if (!confirm(`Удалить объект «${name}» вместе с заявкой, КП, поставками и актами?`)) return;
     setBusy(true);
     try {
       const res = await fetch(`${PUBLIC_API}/api/projects/${projectId}`, { method: "DELETE" });

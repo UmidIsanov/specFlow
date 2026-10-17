@@ -5,8 +5,7 @@ import UploadForm from "@/components/UploadForm";
 import SpecTable from "@/components/SpecTable";
 import ExportButton from "@/components/ExportButton";
 import ClearSpecButton from "@/components/ClearSpecButton";
-
-const SYSTEMS = ["ПС", "СОУЭ", "СКС", "СОТ", "СКУД", "АПТ", "ПЕРИМЕТР"];
+import { SYSTEMS, abbrLabel } from "@/lib/abbr";
 
 export default async function SpecPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,24 +19,24 @@ export default async function SpecPage({ params }: { params: Promise<{ id: strin
       <UploadForm
         action={`/api/projects/${id}/spec/import`}
         pdfAction={`/api/projects/${id}/spec/import-pdf`}
-        title="Импорт спецификации или заявки"
+        title="Импорт заявки"
         hint="Excel из конвертера или любой PDF: с текстовым слоем читается сразу, скан распознаётся через Gemini — до пары минут. Один и тот же файл повторно распознаётся бесплатно."
         allowReplace
         fields={[
           {
             name: "system",
             label: "Система",
-            options: SYSTEMS.map((s) => ({ value: s, label: `Система по умолчанию: ${s}` })),
+            options: SYSTEMS.map((s) => ({ value: s, label: `Система по умолчанию: ${abbrLabel(s)}` })),
           },
         ]}
       />
 
       {items.length === 0 ? (
-        <Empty title="Спецификация пуста" hint="Загрузите файл выше — позиции появятся здесь" />
+        <Empty title="Заявка пуста" hint="Загрузите файл выше — позиции появятся здесь" />
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2 text-sm text-ink-600">
-            <ExportButton path={`/projects/${id}/export/spec.xlsx`} label="Спецификация в Excel" />
+            <ExportButton path={`/projects/${id}/export/spec.xlsx`} label="Заявка в Excel" />
             <ClearSpecButton projectId={id} count={items.length} />
             <span>
               Позиций: <b className="tabular">{items.length}</b>

@@ -38,7 +38,7 @@ function addSheet(wb: XLSX.WorkBook, name: string, rows: Record<string, unknown>
   XLSX.utils.book_append_sheet(wb, sheet, name.slice(0, 31));
 }
 
-/* -------------------------------- Спецификация -------------------------------- */
+/* ----------------------------------- Заявка ---------------------------------- */
 
 exportRouter.get(
   "/projects/:projectId/export/spec.xlsx",
@@ -54,7 +54,7 @@ exportRouter.get(
     const hasTags = items.some((i) => i.tag);
     addSheet(
       wb,
-      "Спецификация",
+      "Заявка",
       items.map((i) => ({
         "№": i.pos ?? "",
         ...(hasTags ? { "Тэг": i.tag ?? "", "Опросный лист": i.datasheet ?? "" } : {}),
@@ -94,7 +94,7 @@ exportRouter.get(
       }))
     );
 
-    sendWorkbook(res, wb, `Спецификация — ${project.name}.xlsx`);
+    sendWorkbook(res, wb, `Заявка — ${project.name}.xlsx`);
   })
 );
 

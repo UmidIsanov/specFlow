@@ -52,7 +52,7 @@ export default async function OfferPage({ params }: { params: Promise<{ id: stri
           label="Не предложено по проекту"
           value={missing.length}
           tone={missing.length > 0 ? "danger" : "good"}
-          hint={`из ${spec.length} позиций спецификации`}
+          hint={`из ${spec.length} позиций заявки`}
         />
       </div>
 
@@ -84,7 +84,7 @@ export default async function OfferPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </>
                     ) : (
-                      <span className="text-xs text-ink-400">нет в спецификации</span>
+                      <span className="text-xs text-ink-400">нет в заявке</span>
                     )}
                   </td>
                   <td className="max-w-[360px] px-3 py-3">
@@ -149,7 +149,7 @@ export default async function OfferPage({ params }: { params: Promise<{ id: stri
         <Card className="p-5">
           <div className="flex items-center gap-2">
             <Badge tone="green">Полное покрытие</Badge>
-            <span className="text-sm text-ink-600">Поставщик закрыл все позиции спецификации.</span>
+            <span className="text-sm text-ink-600">Поставщик закрыл все позиции заявки.</span>
           </div>
         </Card>
       )}

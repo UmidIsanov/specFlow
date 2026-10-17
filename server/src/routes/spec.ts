@@ -41,7 +41,7 @@ specRouter.get(
   })
 );
 
-/** Пакетная загрузка спецификации (в т.ч. из JSON, который отдаёт pdf-spec-converter). */
+/** Пакетная загрузка заявки (в т.ч. из JSON, который отдаёт pdf-spec-converter). */
 specRouter.post(
   "/projects/:projectId/spec",
   ah(async (req, res) => {
@@ -66,7 +66,7 @@ specRouter.post(
   })
 );
 
-/** Импорт спецификации из Excel (выгрузка pdf-spec-converter или лист из AutoCAD). */
+/** Импорт заявки из Excel (выгрузка pdf-spec-converter или лист из AutoCAD). */
 specRouter.post(
   "/projects/:projectId/spec/import",
   upload.single("file"),
@@ -138,7 +138,7 @@ specRouter.get(
 );
 
 /**
- * Импорт заявки или спецификации из PDF — фоновой задачей с прогрессом.
+ * Импорт заявки из PDF — фоновой задачей с прогрессом.
  * Текстовый слой разбираем сами по сетке таблицы; скан отправляем в конвертер (Gemini).
  */
 specRouter.post(
@@ -166,8 +166,8 @@ specRouter.post(
       if (guess.kind === "kp") {
         throw new HttpError(
           422,
-          `Похоже, это коммерческое предложение, а не спецификация (${guess.reasons.slice(0, 2).join(", ")}). ` +
-            "Загрузите его на вкладке «Анализ КП» — там оно сравнится со спецификацией и заявкой."
+          `Похоже, это коммерческое предложение, а не заявка (${guess.reasons.slice(0, 2).join(", ")}). ` +
+            "Загрузите его на вкладке «Анализ КП» — там оно сравнится с заявкой."
         );
       }
       let rows: typeof table.rows | undefined;
@@ -192,7 +192,7 @@ specRouter.post(
       }
       if (!rows) {
         const converted = await convertPdf(buffer, originalname, "spec", report);
-        if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу спецификации");
+        if (!converted.rows.length) throw new HttpError(422, "Конвертер не нашёл в документе таблицу заявки");
         rows = converted.rows;
         warnings = converted.warnings;
       }
@@ -202,8 +202,8 @@ specRouter.post(
       if (kind.kind === "kp") {
         throw new HttpError(
           422,
-          `Похоже, это коммерческое предложение, а не спецификация: цены указаны в ${kind.priced} строках из ${kind.total}. ` +
-            "Загрузите его на вкладке «Анализ КП» — тогда оно сравнится со спецификацией и заявкой."
+          `Похоже, это коммерческое предложение, а не заявка: цены указаны в ${kind.priced} строках из ${kind.total}. ` +
+            "Загрузите его на вкладке «Анализ КП» — тогда оно сравнится с заявкой."
         );
       }
 
@@ -277,7 +277,7 @@ function dependentsMessage(d: Awaited<ReturnType<typeof dependents>>) {
   return parts.join(", ");
 }
 
-/** Удаление позиций: тело { ids } — выбранные, пустое — вся спецификация объекта. */
+/** Удаление позиций: тело { ids } — выбранные, пустое — вся заявка объекта. */
 specRouter.delete(
   "/projects/:projectId/spec",
   ah(async (req, res) => {
@@ -304,7 +304,7 @@ specRouter.delete(
     }
 
     await prisma.$transaction(async (tx) => {
-      // Строки КП не удаляем — они просто перестают быть привязаны к спецификации
+      // Строки КП не удаляем — они просто перестают быть привязаны к заявке
       // и попадут в «вне проекта». Сами предложения поставщиков трогать нельзя.
       await tx.offerItem.updateMany({
         where: { specItemId: { in: targetIds } },

@@ -8,7 +8,7 @@ export default function ResetOffersButton({ projectId, count }: { projectId: str
   return (
     <DangerButton
       size="small"
-      confirm={`Удалить все загруженные КП — ${count} шт. — вместе с разбором и сравнением? Спецификация останется на месте.`}
+      confirm={`Удалить все загруженные КП — ${count} шт. — вместе с разбором и сравнением? Заявка останется на месте.`}
       request={() => fetch(`${PUBLIC_API}/api/projects/${projectId}/offers`, { method: "DELETE" })}
     >
       Сбросить все КП

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui";
 import { SortTh, TableShell, theadClass, tfootClass, rowClass, totalsByUnit, useSort } from "@/components/table";
 import DangerButton from "@/components/DangerButton";
 import { PUBLIC_API } from "@/lib/api";
+import { abbrLabel } from "@/lib/abbr";
 import { money, nf } from "@/lib/format";
 
 const ALL = "__all__";
@@ -15,11 +16,14 @@ function Select({
   onChange,
   options,
   allLabel,
+  /** В выпадающем списке попап не покажешь — там расшифровка идёт текстом. */
+  label = (v: string) => v,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: string[];
   allLabel: string;
+  label?: (v: string) => string;
 }) {
   if (options.length < 2) return null;
   return (
@@ -27,14 +31,14 @@ function Select({
       <option value={ALL}>{allLabel}</option>
       {options.map((o) => (
         <option key={o} value={o}>
-          {o}
+          {label(o)}
         </option>
       ))}
     </select>
   );
 }
 
-/** Спецификация объекта: фильтры, поиск, сортировка, итоги по единицам и удаление лишнего. */
+/** Заявка объекта: фильтры, поиск, сортировка, итоги по единицам и удаление лишнего. */
 export default function SpecTable({ items, projectId }: { items: SpecItem[]; projectId: string }) {
   const [building, setBuilding] = useState(ALL);
   const [section, setSection] = useState(ALL);
@@ -114,7 +118,7 @@ export default function SpecTable({ items, projectId }: { items: SpecItem[]; pro
       <div className="flex flex-wrap items-center gap-2">
         <Select value={building} onChange={setBuilding} options={buildings} allLabel="Все здания" />
         <Select value={section} onChange={setSection} options={sections} allLabel="Все разделы" />
-        <Select value={system} onChange={setSystem} options={systems} allLabel="Все системы" />
+        <Select value={system} onChange={setSystem} options={systems} allLabel="Все системы" label={abbrLabel} />
         <Select value={doc} onChange={setDoc} options={docs} allLabel="Все документы" />
         <input
           className="input w-56"
@@ -158,7 +162,7 @@ export default function SpecTable({ items, projectId }: { items: SpecItem[]; pro
           </span>
           <DangerButton
             size="small"
-            confirm={`Удалить ${pickedShown.length} позиций из спецификации? Отменить нельзя.`}
+            confirm={`Удалить ${pickedShown.length} позиций из заявки? Отменить нельзя.`}
             request={removeSelected}
           >
             Удалить выбранное

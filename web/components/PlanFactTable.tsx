@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { PlanFactRow } from "@/lib/types";
 import { Progress } from "@/components/ui";
+import { Abbr } from "@/components/Abbr";
 import { SortTh, TableShell, theadClass, tfootClass, rowClass, useSort } from "@/components/table";
 import { nf, pct } from "@/lib/format";
 
@@ -84,7 +85,7 @@ export default function PlanFactTable({ rows }: { rows: PlanFactRow[] }) {
                 <td className="max-w-[420px] px-3 py-2">
                   <div className="leading-snug">{r.name}</div>
                   <div className="text-xs text-ink-400">
-                    {r.system} · {r.article ?? "без марки"}
+                    <Abbr term={r.system} /> · {r.article ?? "без марки"}
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-3 py-2 text-right tabular">

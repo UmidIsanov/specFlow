@@ -16,7 +16,7 @@ export function Stat({
   hint,
   tone = "default",
 }: {
-  label: string;
+  label: ReactNode;
   value: ReactNode;
   hint?: ReactNode;
   tone?: "default" | "warn" | "danger" | "good";
@@ -86,7 +86,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
-export function Empty({ title, hint }: { title: string; hint?: string }) {
+export function Empty({ title, hint }: { title: string; hint?: ReactNode }) {
   return (
     <Card className="p-10 text-center">
       <div className="font-medium">{title}</div>

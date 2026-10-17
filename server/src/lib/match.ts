@@ -1,5 +1,5 @@
 /**
- * Сопоставление позиций КП со спецификацией.
+ * Сопоставление позиций КП с заявкой.
  * Задача: понять, что поставщик предложил — ровно то же, аналог или вообще не то.
  */
 
@@ -304,7 +304,7 @@ function scorePair(spec: Candidate, offer: Candidate) {
   };
 }
 
-/** Ищет для строки КП лучшую позицию спецификации и сразу предлагает вердикт инженеру. */
+/** Ищет для строки КП лучшую позицию заявки и сразу предлагает вердикт инженеру. */
 export function matchOfferItem(offer: Candidate, specItems: Candidate[]): MatchResult {
   let best: (ReturnType<typeof scorePair> & { item: Candidate }) | null = null;
 
@@ -320,7 +320,7 @@ export function matchOfferItem(offer: Candidate, specItems: Candidate[]): MatchR
       matchType: "NONE",
       matchScore: best?.score ?? 0,
       verdict: "PENDING",
-      reasons: ["Позиция не найдена в спецификации — проверить вручную"],
+      reasons: ["Позиция не найдена в заявке — проверить вручную"],
       paramDiffs: [],
     };
   }

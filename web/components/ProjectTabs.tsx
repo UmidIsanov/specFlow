@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AbbrText } from "@/components/Abbr";
 
 const TABS = [
   { href: "", label: "Сводка" },
-  { href: "/spec", label: "Спецификация" },
+  { href: "/spec", label: "Заявка" },
   { href: "/offers", label: "Анализ КП" },
   { href: "/audit", label: "Сверка с заявкой" },
   { href: "/supply", label: "Поставки и склад" },
@@ -29,7 +30,7 @@ export default function ProjectTabs({ projectId }: { projectId: string }) {
               active ? "border-brand-500 text-brand-600" : "border-transparent text-ink-600 hover:text-ink-900"
             }`}
           >
-            {t.label}
+            <AbbrText>{t.label}</AbbrText>
           </Link>
         );
       })}

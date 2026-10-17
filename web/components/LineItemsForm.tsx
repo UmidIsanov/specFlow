@@ -4,11 +4,13 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PUBLIC_API } from "@/lib/api";
 import type { SpecItem, Supplier } from "@/lib/types";
+import { Abbr } from "@/components/Abbr";
+import { SYSTEMS, abbrLabel } from "@/lib/abbr";
 import { nf } from "@/lib/format";
 
 type Mode = "delivery" | "act";
 
-/** Общая форма для прихода на склад и для акта установки: поиск по спецификации + количества. */
+/** Общая форма для прихода на склад и для акта установки: поиск по заявке + количества. */
 export default function LineItemsForm({
   mode,
   projectId,
@@ -137,15 +139,17 @@ export default function LineItemsForm({
               value={meta.system ?? "ПС"}
               onChange={(e) => setMeta({ ...meta, system: e.target.value })}
             >
-              {["ПС", "СОУЭ", "СКС", "СОТ", "СКУД", "АПТ", "ПЕРИМЕТР"].map((s) => (
-                <option key={s}>{s}</option>
+              {SYSTEMS.map((s) => (
+                <option key={s} value={s}>
+                  {abbrLabel(s)}
+                </option>
               ))}
             </select>
           </>
         )}
         <input
           className="input flex-1 min-w-[200px]"
-          placeholder="Поиск по спецификации…"
+          placeholder="Поиск по заявке…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -163,7 +167,7 @@ export default function LineItemsForm({
                   <td className="px-3 py-2">
                     <div className="leading-snug">{s.name}</div>
                     <div className="text-xs text-ink-400">
-                      {s.system} · {s.article ?? "—"}
+                      <Abbr term={s.system} /> · {s.article ?? "—"}
                       {mode === "act" ? ` · на складе ${nf.format(available)} ${s.unit}` : ""}
                     </div>
                   </td>

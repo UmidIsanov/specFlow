@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AbbrText } from "@/components/Abbr";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Позиция — спецификации, КП и склад на объекте",
-  description: "Спецификации, анализ КП, поставки, склад и ИТД на объекте",
+  title: "Позиция — заявки, КП и склад на объекте",
+  description: "Заявки, анализ КП, поставки, склад и ИТД на объекте",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Позиция
             </Link>
             <span className="text-xs text-ink-400">
-              Спецификации · КП · Поставки · Склад · ИТД
+              <AbbrText>Заявки · КП · Поставки · Склад · ИТД</AbbrText>
             </span>
           </div>
         </header>
