@@ -2,6 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { ah, HttpError } from "../lib/http.js";
+import { requireOwner } from "../lib/auth.js";
+import { MEMBER_ROLE, USER_ROLE } from "../lib/enums.js";
 
 export const projectsRouter = Router();
 
@@ -14,8 +16,11 @@ const projectSchema = z.object({
 
 projectsRouter.get(
   "/",
-  ah(async (_req, res) => {
+  ah(async (req, res) => {
+    const user = req.user!;
     const projects = await prisma.project.findMany({
+      // Каждый видит свои объекты и те, куда его позвали; ADMIN ведёт программу и видит все.
+      where: user.role === USER_ROLE.ADMIN ? undefined : { members: { some: { userId: user.id } } },
       orderBy: { createdAt: "desc" },
       include: { _count: { select: { specItems: true, offers: true, deliveries: true, acts: true } } },
     });
@@ -27,7 +32,12 @@ projectsRouter.post(
   "/",
   ah(async (req, res) => {
     const data = projectSchema.parse(req.body);
-    res.status(201).json(await prisma.project.create({ data }));
+    const userId = req.user!.id;
+    const project = await prisma.project.create({
+      // Владелец сразу и в участниках: проверки доступа смотрят именно туда.
+      data: { ...data, ownerId: userId, members: { create: { userId, role: MEMBER_ROLE.OWNER } } },
+    });
+    res.status(201).json(project);
   })
 );
 
@@ -45,6 +55,7 @@ projectsRouter.get(
 
 projectsRouter.delete(
   "/:id",
+  requireOwner,
   ah(async (req, res) => {
     await prisma.project.delete({ where: { id: req.params.id } });
     res.status(204).end();
