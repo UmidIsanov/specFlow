@@ -87,7 +87,14 @@ export default function TeamPanel({ projectId }: { projectId: string }) {
     await load();
   };
 
-  if (!team) return null;
+  // Пока список едет, показываем саму карточку: иначе блок появляется рывком.
+  if (!team)
+    return (
+      <Card className="p-5">
+        <h2 className="font-semibold">Команда объекта</h2>
+        <p className="mt-2 text-sm text-ink-400">Загружаю…</p>
+      </Card>
+    );
 
   return (
     <Card className="p-5">

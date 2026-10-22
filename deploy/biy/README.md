@@ -28,6 +28,26 @@ Cloudflare Tunnel → 8137 шлюз ┬─ /            страница выб�
 
 Шлюз — один файл `deploy/gateway-linux-amd64` (6 МБ, без зависимостей).
 
+## Кто может войти
+
+Вход закрыт паролем: пользователей заводят по приглашению, а не свободной
+регистрацией. Первого создаёт установка, если передать `ADMIN_EMAIL` — пароль
+она покажет один раз, его стоит сразу сменить на странице «Вход и пароль».
+Позже первого пользователя можно завести вручную:
+
+```bash
+ADMIN_EMAIL=вы@почта.com npm run access:init --prefix server
+```
+
+Остальных зовёт владелец объекта: на странице объекта блок «Команда объекта»
+выдаёт ссылку-приглашение на неделю — её пересылают человеку сами, писем
+программа пока не шлёт.
+
+Cookie входа помечается `Secure` только при `COOKIE_SECURE=1` в
+`deploy/biy/pm2.config.cjs`. Сейчас пусто: домен отвечает и по http, а с
+`Secure` вход по http молча не работал бы. Включить, когда на spec.biy.kz
+появится редирект http → https.
+
 ## Установка
 
 ```bash
@@ -36,7 +56,7 @@ git clone https://github.com/UmidIsanov/specFlow.git pozitsiya
 cd pozitsiya
 bash deploy/biy/check.sh        # посмотреть, что умеет сервер
 cp ~/converter/.env converter/.env   # ключ Gemini — тот же, что у старой программы
-bash deploy/biy/install.sh      # зависимости и сборка, 5–10 минут
+ADMIN_EMAIL=вы@почта.com bash deploy/biy/install.sh   # зависимости, сборка и первый пользователь
 bash deploy/biy/pm2-start.sh    # запуск
 bash deploy/biy/status.sh       # проверка: везде должно быть 200
 ```
