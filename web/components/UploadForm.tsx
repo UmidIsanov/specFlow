@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PUBLIC_API } from "@/lib/api";
+import { apiFetch } from "@/lib/clientApi";
 import type { WorkbookInfo } from "@/lib/types";
 
 type Field = { name: string; label: string; options?: { value: string; label: string }[] };
@@ -81,7 +81,7 @@ export default function UploadForm({
   // сканы читает отдельный сервис — заранее показываем, подключён ли он
   useEffect(() => {
     if (!pdfAction) return;
-    fetch(`${PUBLIC_API}/api/converter/status`)
+    apiFetch(`/api/converter/status`)
       .then((r) => r.json())
       .then(setConverter)
       .catch(() => setConverter({ available: false, keyConfigured: false }));
@@ -113,7 +113,7 @@ export default function UploadForm({
       try {
         const fd = new FormData();
         fd.append("file", next);
-        const res = await fetch(`${PUBLIC_API}/api/spec/inspect`, { method: "POST", body: fd });
+        const res = await apiFetch(`/api/spec/inspect`, { method: "POST", body: fd });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Не удалось прочитать файл");
         const info: WorkbookInfo = await res.json();
         setBook(info);
@@ -147,7 +147,7 @@ export default function UploadForm({
     const startedAt = Date.now();
     if (isPdf(file)) setProgress({ stage: "Отправляю файл", done: 0, total: 0, startedAt });
     try {
-      const res = await fetch(`${PUBLIC_API}${target}`, { method: "POST", body: fd });
+      const res = await apiFetch(`${target}`, { method: "POST", body: fd });
       let data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? `Ошибка ${res.status}`);
 
@@ -155,7 +155,7 @@ export default function UploadForm({
       if (data.jobId) {
         for (;;) {
           await wait(POLL_MS);
-          const jr = await fetch(`${PUBLIC_API}/api/jobs/${data.jobId}`);
+          const jr = await apiFetch(`/api/jobs/${data.jobId}`);
           if (!jr.ok) throw new Error("Задача импорта потерялась — повторите");
           const job: JobState = await jr.json();
           setProgress({ ...job.progress, startedAt });

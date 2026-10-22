@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { PUBLIC_API } from "@/lib/api";
+import { apiFetch } from "@/lib/clientApi";
 
 export default function AddSupplierForm() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function AddSupplierForm() {
     const fd = new FormData(e.currentTarget);
     setBusy(true);
     try {
-      await fetch(`${PUBLIC_API}/api/suppliers`, {
+      await apiFetch(`/api/suppliers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

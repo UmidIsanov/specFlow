@@ -28,10 +28,19 @@ npm run db:push --prefix server
 echo "== 4. Сборка API и интерфейса =="
 npm run build --prefix server
 npm install --prefix web --no-audit --fund=false
-BASE_PATH=/pozitsiya NEXT_PUBLIC_API_URL=/pozitsiya-api npm run build --prefix web
+BASE_PATH=/pozitsiya NEXT_PUBLIC_BASE_PATH=/pozitsiya NEXT_PUBLIC_API_URL=/pozitsiya-api npm run build --prefix web
 echo "✅ Интерфейс собран"
 
-echo "== 5. Ключ Gemini =="
+echo "== 5. Первый пользователь =="
+if [ -n "$ADMIN_EMAIL" ]; then
+    npm run access:init --prefix server
+else
+    echo "⚠️  Вход закрыт паролем, а пользователей ещё нет. Заведите первого:"
+    echo "   ADMIN_EMAIL=вы@почта.com npm run access:init --prefix server"
+    echo "   Пароль скрипт покажет один раз — запишите его."
+fi
+
+echo "== 6. Ключ Gemini =="
 if [ ! -f converter/.env ]; then
     echo "⚠️  Нет converter/.env — распознавание PDF работать не будет."
     echo "   Скопируйте ключ из старой программы:"

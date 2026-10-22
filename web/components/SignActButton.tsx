@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { PUBLIC_API } from "@/lib/api";
+import { apiFetch } from "@/lib/clientApi";
 import { nf } from "@/lib/format";
 
 type Shortage = { specItemId: string; name: string; unit: string; need: number; available: number };
@@ -16,7 +16,7 @@ export default function SignActButton({ actId }: { actId: string }) {
   async function sign() {
     setBusy(true);
     try {
-      const res = await fetch(`${PUBLIC_API}/api/acts/${actId}/sign`, { method: "POST" });
+      const res = await apiFetch(`/api/acts/${actId}/sign`, { method: "POST" });
       const data = await res.json();
       if (res.ok) setShortages(data.shortages ?? []);
       router.refresh();

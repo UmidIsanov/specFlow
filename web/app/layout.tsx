@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AbbrText } from "@/components/Abbr";
+import UserMenu from "@/components/UserMenu";
+import { me } from "@/lib/api";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,7 +10,8 @@ export const metadata: Metadata = {
   description: "Заявки, анализ КП, поставки, склад и ИТД на объекте",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await me();
   return (
     <html lang="ru">
       <body>
@@ -21,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span className="text-xs text-ink-400">
               <AbbrText>Заявки · КП · Поставки · Склад · ИТД</AbbrText>
             </span>
+            {user ? <UserMenu name={user.name ?? user.email} /> : null}
           </div>
         </header>
         <main className="mx-auto max-w-[1500px] px-6 py-6">{children}</main>

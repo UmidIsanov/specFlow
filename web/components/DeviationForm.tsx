@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { PUBLIC_API } from "@/lib/api";
+import { apiFetch } from "@/lib/clientApi";
 import type { SpecItem } from "@/lib/types";
 
 const KINDS = [
@@ -23,7 +23,7 @@ export default function DeviationForm({ projectId, specItems }: { projectId: str
     const fd = new FormData(e.currentTarget);
     setBusy(true);
     try {
-      await fetch(`${PUBLIC_API}/api/projects/${projectId}/deviations`, {
+      await apiFetch(`/api/projects/${projectId}/deviations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

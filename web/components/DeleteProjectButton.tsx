@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { PUBLIC_API } from "@/lib/api";
+import { apiFetch } from "@/lib/clientApi";
 
 /** Удаление объекта со всеми данными — с подтверждением, откатить нельзя. */
 export default function DeleteProjectButton({ projectId, name }: { projectId: string; name: string }) {
@@ -13,7 +13,7 @@ export default function DeleteProjectButton({ projectId, name }: { projectId: st
     if (!confirm(`Удалить объект «${name}» вместе с заявкой, КП, поставками и актами?`)) return;
     setBusy(true);
     try {
-      const res = await fetch(`${PUBLIC_API}/api/projects/${projectId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/projects/${projectId}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
       router.refresh();
     } catch (err) {

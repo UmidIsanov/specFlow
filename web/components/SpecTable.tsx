@@ -5,7 +5,7 @@ import type { SpecItem } from "@/lib/types";
 import { Badge } from "@/components/ui";
 import { SortTh, TableShell, theadClass, tfootClass, rowClass, totalsByUnit, useSort } from "@/components/table";
 import DangerButton from "@/components/DangerButton";
-import { PUBLIC_API } from "@/lib/api";
+import { apiFetch } from "@/lib/clientApi";
 import { abbrLabel } from "@/lib/abbr";
 import { money, nf } from "@/lib/format";
 
@@ -104,7 +104,7 @@ export default function SpecTable({ items, projectId }: { items: SpecItem[]; pro
     });
 
   const removeSelected = (force: boolean) =>
-    fetch(`${PUBLIC_API}/api/projects/${projectId}/spec`, {
+    apiFetch(`/api/projects/${projectId}/spec`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: pickedShown, force }),

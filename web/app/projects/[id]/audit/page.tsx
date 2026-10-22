@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { api } from "@/lib/api";
 import type { TagAudit } from "@/lib/types";
 import { Card, Stat, Badge, Empty } from "@/components/ui";
@@ -21,7 +22,9 @@ export default async function AuditPage({
   let audit: TagAudit;
   try {
     audit = await api<TagAudit>(`/projects/${id}/tag-audit${offerId ? `?offerId=${offerId}` : ""}`);
-  } catch {
+  } catch (e) {
+    // Уход на страницу входа тоже прилетает сюда ошибкой — его пропускаем дальше.
+    unstable_rethrow(e);
     return (
       <Empty
         title="Нечего сверять"

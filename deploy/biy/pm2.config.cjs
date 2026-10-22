@@ -31,6 +31,10 @@ module.exports = {
         DATABASE_URL: "file:" + path.join(ROOT, "server", "prisma", "dev.db"),
         CONVERTER_URL: "http://127.0.0.1:8139",
         RECOGNIZER: "auto",
+        // Cookie входа только по https. Сейчас выключено: домен отвечает и по http,
+        // а с secure-cookie вход по http молча не работал бы. Включить "1", когда
+        // на spec.biy.kz появится редирект http → https.
+        COOKIE_SECURE: "",
       },
     },
     {

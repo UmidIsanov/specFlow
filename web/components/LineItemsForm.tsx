@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PUBLIC_API } from "@/lib/api";
+import { apiFetch } from "@/lib/clientApi";
 import type { SpecItem, Supplier } from "@/lib/types";
 import { Abbr } from "@/components/Abbr";
 import { SYSTEMS, abbrLabel } from "@/lib/abbr";
@@ -55,7 +55,7 @@ export default function LineItemsForm({
         mode === "delivery"
           ? { supplierId: meta.supplierId || undefined, number: meta.number, waybill: meta.waybill, note: meta.note, items }
           : { number: meta.number, location: meta.location, system: meta.system || "ПС", items };
-      const res = await fetch(`${PUBLIC_API}/api/projects/${projectId}/${mode === "delivery" ? "deliveries" : "acts"}`, {
+      const res = await apiFetch(`/api/projects/${projectId}/${mode === "delivery" ? "deliveries" : "acts"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

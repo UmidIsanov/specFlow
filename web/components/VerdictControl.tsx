@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { PUBLIC_API } from "@/lib/api";
+import { apiFetch } from "@/lib/clientApi";
 import type { Verdict } from "@/lib/types";
 
 const OPTIONS: { value: Verdict; label: string }[] = [
@@ -30,7 +30,7 @@ export default function VerdictControl({
   const [saved, setSaved] = useState(false);
 
   async function save(next: Partial<{ verdict: Verdict; engineerComment: string }>) {
-    await fetch(`${PUBLIC_API}/api/offer-items/${offerItemId}`, {
+    await apiFetch(`/api/offer-items/${offerItemId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(next),

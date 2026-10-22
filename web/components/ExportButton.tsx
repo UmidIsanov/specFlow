@@ -1,4 +1,4 @@
-import { PUBLIC_API } from "@/lib/api";
+import { PUBLIC_API } from "@/lib/clientApi";
 
 /** Единая кнопка выгрузки в Excel — ссылка на API, скачивание делает браузер. */
 export default function ExportButton({ path, label = "Выгрузить в Excel" }: { path: string; label?: string }) {
