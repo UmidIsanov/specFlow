@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import type { Comparison, PlanFact, WorkAct, Deviation } from "@/lib/types";
 import { Card, Stat, Progress, LinkButton, Badge } from "@/components/ui";
 import { Abbr, AbbrText } from "@/components/Abbr";
+import TeamPanel from "@/components/TeamPanel";
 import { compactMoney, date, nf, pct } from "@/lib/format";
 
 export default async function ProjectDashboard({ params }: { params: Promise<{ id: string }> }) {
@@ -162,6 +163,8 @@ export default async function ProjectDashboard({ params }: { params: Promise<{ i
           )}
         </Card>
       </div>
+
+      <TeamPanel projectId={id} />
     </div>
   );
 }

@@ -35,6 +35,8 @@ module.exports = {
         // а с secure-cookie вход по http молча не работал бы. Включить "1", когда
         // на spec.biy.kz появится редирект http → https.
         COOKIE_SECURE: "",
+        // Домен для ссылок-приглашений: их владелец объекта пересылает человеку сам.
+        APP_URL: "https://spec.biy.kz/pozitsiya",
       },
     },
     {

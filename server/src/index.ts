@@ -9,6 +9,7 @@ import { supplyRouter } from "./routes/supply.js";
 import { auditRouter } from "./routes/audit.js";
 import { exportRouter } from "./routes/export.js";
 import { authRouter } from "./routes/auth.js";
+import { membersRouter } from "./routes/members.js";
 import { ownerOf, requireAuth, requireProject, requireProjectOf } from "./lib/auth.js";
 
 const app = express();
@@ -39,6 +40,7 @@ app.use("/api/deliveries/:id", requireProjectOf(ownerOf.delivery));
 
 app.use("/api/projects", projectsRouter);
 app.use("/api/suppliers", suppliersRouter);
+app.use("/api", membersRouter);
 app.use("/api", specRouter);
 app.use("/api", offersRouter);
 app.use("/api", supplyRouter);

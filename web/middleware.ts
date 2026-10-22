@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /** Страницы, куда пускаем без входа. */
-const OPEN = ["/login"];
+const OPEN = ["/login", "/register"];
 
 /**
  * Первая дверь: без cookie сессии дальше не пускаем. Саму сессию проверяет API —
