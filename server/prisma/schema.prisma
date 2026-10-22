@@ -18,6 +18,13 @@ model Project {
   address   String?
   status    String   @default("ACTIVE") // ACTIVE | DONE | PAUSED
   createdAt DateTime @default(now())
+  /// Кто завёл объект. Необязателен, пока старые объекты не получили владельца
+  /// скриптом `npm run access:init` — после прогона на сервере поле станет обязательным.
+  ownerId   String?
+
+  owner   User?           @relation("ProjectOwner", fields: [ownerId], references: [id])
+  members ProjectMember[]
+  invites Invite[]
 
   specItems   SpecItem[]
   offers      Offer[]
@@ -25,6 +32,8 @@ model Project {
   acts        WorkAct[]
   stockMoves  StockMove[]
   deviations  Deviation[]
+
+  @@index([ownerId])
 }
 
 /// Позиция проектной спецификации (то, что приходит из pdf-spec-converter)
@@ -207,5 +216,83 @@ model Deviation {
   project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   specItem SpecItem? @relation(fields: [specItemId], references: [id])
 
+  @@index([projectId])
+}
+
+// ───────────────────────── Доступ ─────────────────────────
+// Объект видит только тот, кто его завёл, и те, кого он позвал.
+// Роли храним строками (SQLite без enum, см. src/lib/enums.ts).
+
+/// Человек, который работает с программой: инженер, прораб, ПТО, закупщик
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String?
+  /// scrypt: соль и хэш в одной строке, см. src/lib/password.ts
+  passwordHash    String
+  role            String    @default("USER") // USER | ADMIN
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  lastLoginAt     DateTime?
+
+  sessions      Session[]
+  ownedProjects Project[]       @relation("ProjectOwner")
+  memberships   ProjectMember[]
+  invitesSent   Invite[]        @relation("InviteAuthor")
+  invitesTaken  Invite[]        @relation("InviteGuest")
+}
+
+/// Вход с одного устройства. В cookie уходит случайный токен, в базе лежит его хэш.
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  userAgent  String?
+  ip         String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Кто допущен к объекту и с какими правами
+model ProjectMember {
+  id          String   @id @default(cuid())
+  projectId   String
+  userId      String
+  role        String   @default("ENGINEER") // OWNER | ENGINEER | VIEWER
+  invitedById String?
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+}
+
+/// Приглашение на объект. Пока нет почтового ящика, ссылку отдаём владельцу —
+/// он пересылает её человеку сам.
+model Invite {
+  id           String    @id @default(cuid())
+  email        String
+  projectId    String?
+  role         String    @default("ENGINEER") // ENGINEER | VIEWER
+  tokenHash    String    @unique
+  invitedById  String
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  acceptedById String?
+  createdAt    DateTime  @default(now())
+
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invitedBy User     @relation("InviteAuthor", fields: [invitedById], references: [id], onDelete: Cascade)
+  accepted  User?    @relation("InviteGuest", fields: [acceptedById], references: [id])
+
+  @@index([email])
   @@index([projectId])
 }

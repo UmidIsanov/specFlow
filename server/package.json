@@ -9,7 +9,8 @@
     "start": "node dist/src/index.js",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "rm -f prisma/dev.db && prisma db push && tsx prisma/seed.ts"
+    "db:reset": "rm -f prisma/dev.db && prisma db push && tsx prisma/seed.ts",
+    "access:init": "tsx prisma/initAccess.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
