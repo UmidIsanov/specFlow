@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/clientApi";
 
@@ -17,7 +18,9 @@ export default function UserMenu({ name }: { name: string }) {
 
   return (
     <div className="ml-auto flex items-center gap-3 text-sm">
-      <span className="text-ink-500">{name}</span>
+      <Link href="/account" className="text-ink-500 hover:text-ink-900 hover:underline">
+        {name}
+      </Link>
       <button
         type="button"
         onClick={logout}
