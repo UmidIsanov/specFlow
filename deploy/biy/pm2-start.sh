@@ -7,6 +7,14 @@ cd "$(dirname "$0")/../.."
 ROOT="$(pwd)"
 command -v pm2 >/dev/null || { echo "❌ PM2 не найден"; exit 1; }
 
+# Этот скрипт — для первой установки: он переставляет порты. Если «Позиция»
+# уже стоит, 8137 занят её шлюзом, и дальше идти нельзя.
+if pm2 describe poz-gateway >/dev/null 2>&1; then
+    echo "«Позиция» уже запущена — порты переставлять не нужно."
+    echo "Для обновления:  bash $ROOT/deploy/biy/pm2-reload.sh"
+    exit 1
+fi
+
 echo "== 1. Ищу старый конвертер в PM2 =="
 LEGACY_NAME=$(pm2 jlist 2>/dev/null | node -e '
 let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
