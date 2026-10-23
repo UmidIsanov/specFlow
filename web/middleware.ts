@@ -12,11 +12,14 @@ export function middleware(req: NextRequest) {
   if (OPEN.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
   if (req.cookies.has("poz_session")) return NextResponse.next();
 
-  const url = req.nextUrl.clone();
-  url.pathname = "/login";
-  url.search = "";
-  url.searchParams.set("next", `${pathname}${search}`);
-  return NextResponse.redirect(url);
+  // Адрес страницы входа Next требует абсолютным, а за шлюзом spec.biy.kz в
+  // запросе стоит внутренний Host (127.0.0.1:3000) — по нему человек уехал бы
+  // на localhost. Настоящее имя сайта шлюз передаёт в X-Forwarded-Host.
+  const proto = req.headers.get("x-forwarded-proto") ?? req.nextUrl.protocol.replace(":", "");
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? req.nextUrl.host;
+  const next = encodeURIComponent(`${pathname}${search}`);
+  const url = new URL(`${req.nextUrl.basePath}/login?next=${next}`, `${proto}://${host}`);
+  return NextResponse.redirect(url, 307);
 }
 
 export const config = {

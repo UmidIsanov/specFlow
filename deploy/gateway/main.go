@@ -35,9 +35,14 @@ func proxyTo(raw string) *httputil.ReverseProxy {
 	p := httputil.NewSingleHostReverseProxy(target)
 	base := p.Director
 	p.Director = func(r *http.Request) {
+		// Настоящее имя сайта берём до того, как подменим Host на внутренний:
+		// в Go оно лежит в r.Host, а не в заголовках, и Header.Get("Host") пуст.
+		outer := r.Host
 		base(r)
 		r.Host = target.Host
-		r.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
+		if outer != "" {
+			r.Header.Set("X-Forwarded-Host", outer)
+		}
 		r.Header.Set("X-Forwarded-Proto", "https")
 	}
 	p.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
