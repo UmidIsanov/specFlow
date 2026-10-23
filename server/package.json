@@ -10,7 +10,8 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "rm -f prisma/dev.db && prisma db push && tsx prisma/seed.ts",
-    "access:init": "tsx prisma/initAccess.ts"
+    "access:init": "tsx prisma/initAccess.ts",
+    "access:password": "tsx prisma/resetPassword.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
