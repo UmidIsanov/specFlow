@@ -40,6 +40,7 @@ export default function UploadForm({
   title,
   hint,
   fields = [],
+  hidden = {},
   submitLabel = "Импортировать",
   allowReplace = false,
 }: {
@@ -49,6 +50,8 @@ export default function UploadForm({
   title: string;
   hint?: string;
   fields?: Field[];
+  /** Что уходит вместе с файлом, но человеку показывать нечего: например, выбранная заявка. */
+  hidden?: Record<string, string>;
   submitLabel?: string;
   /** Показать флажок «заменить текущие данные». */
   allowReplace?: boolean;
@@ -137,6 +140,7 @@ export default function UploadForm({
     const fd = new FormData();
     fd.append("file", file);
     for (const [k, v] of Object.entries(values)) if (v) fd.append(k, v);
+    for (const [k, v] of Object.entries(hidden)) if (v) fd.append(k, v);
     if (sheet && !isPdf(file)) fd.append("sheet", sheet);
     if (allowReplace && replace) fd.append("replace", "true");
     const target = isPdf(file) && pdfAction ? pdfAction : action;

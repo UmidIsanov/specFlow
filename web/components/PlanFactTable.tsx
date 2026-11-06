@@ -69,7 +69,7 @@ export default function PlanFactTable({ rows }: { rows: PlanFactRow[] }) {
           <thead className={theadClass}>
             <tr>
               <th className="w-12 px-3 py-2 text-right font-medium">#</th>
-              <SortTh label="Позиция" sortKey="name" sort={sort} toggle={toggle} />
+              <SortTh label="Позиция заявки" sortKey="name" sort={sort} toggle={toggle} />
               <SortTh label="План" sortKey="qtyPlan" sort={sort} toggle={toggle} align="right" />
               <SortTh label="Привезено" sortKey="delivered" sort={sort} toggle={toggle} align="right" />
               <SortTh label="Смонтировано" sortKey="installed" sort={sort} toggle={toggle} align="right" />

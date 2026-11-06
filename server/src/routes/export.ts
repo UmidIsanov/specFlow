@@ -45,8 +45,10 @@ exportRouter.get(
   ah(async (req, res) => {
     const project = await prisma.project.findUnique({ where: { id: req.params.projectId } });
     if (!project) throw new HttpError(404, "Объект не найден");
+    // Выгружаем выбранную заявку, а без выбора — всё, что есть по объекту.
+    const requestId = typeof req.query.requestId === "string" ? req.query.requestId : undefined;
     const items = await prisma.specItem.findMany({
-      where: { projectId: project.id },
+      where: { projectId: project.id, ...(requestId ? { requestId } : {}) },
       orderBy: [{ building: "asc" }, { section: "asc" }, { pos: "asc" }],
     });
 

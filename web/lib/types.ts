@@ -9,11 +9,24 @@ export type Project = {
   address: string | null;
   status: string;
   createdAt: string;
+  requests?: { id: string; number: string | null; revision: number }[];
   _count?: { specItems: number; offers: number; deliveries: number; acts: number; deviations?: number };
+};
+
+export type Request = {
+  id: string;
+  projectId: string;
+  number: string | null;
+  revision: number;
+  title: string | null;
+  sourceFile: string | null;
+  createdAt: string;
+  _count?: { items: number };
 };
 
 export type SpecItem = {
   id: string;
+  requestId: string | null;
   pos: string | null;
   system: string;
   name: string;

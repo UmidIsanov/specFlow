@@ -59,7 +59,7 @@ export default function DeviationForm({ projectId, specItems }: { projectId: str
           ))}
         </select>
         <select name="specItemId" className="input" defaultValue="">
-          <option value="">Позиция проекта (необязательно)</option>
+          <option value="">Позиция заявки (необязательно)</option>
           {specItems.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}

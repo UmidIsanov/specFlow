@@ -6,6 +6,7 @@ import CreateProjectForm from "@/components/CreateProjectForm";
 import { AbbrText } from "@/components/Abbr";
 import DeleteProjectButton from "@/components/DeleteProjectButton";
 import { date } from "@/lib/format";
+import { requestLabel } from "@/lib/request";
 
 export default async function Home() {
   const projects = await api<Project[]>("/projects");
@@ -37,6 +38,13 @@ export default async function Home() {
                 {p.customer ?? "—"}
                 {p.code ? ` · ${p.code}` : ""}
               </p>
+              {p.requests?.length ? (
+                // По номеру заявки объект узнают быстрее, чем по названию.
+                <p className="mt-1 truncate text-xs text-ink-600">
+                  Заявки: {p.requests.slice(0, 3).map(requestLabel).join(", ")}
+                  {p.requests.length > 3 ? ` и ещё ${p.requests.length - 3}` : ""}
+                </p>
+              ) : null}
               <dl className="mt-4 grid grid-cols-4 gap-2 text-center">
                 {[
                   ["Позиций", p._count?.specItems ?? 0],

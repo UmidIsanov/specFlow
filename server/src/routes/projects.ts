@@ -22,7 +22,11 @@ projectsRouter.get(
       // Каждый видит свои объекты и те, куда его позвали; ADMIN ведёт программу и видит все.
       where: user.role === USER_ROLE.ADMIN ? undefined : { members: { some: { userId: user.id } } },
       orderBy: { createdAt: "desc" },
-      include: { _count: { select: { specItems: true, offers: true, deliveries: true, acts: true } } },
+      include: {
+        _count: { select: { specItems: true, offers: true, deliveries: true, acts: true } },
+        // Номера заявок — такой же реквизит объекта, как шифр: видны прямо в карточке.
+        requests: { select: { id: true, number: true, revision: true }, orderBy: [{ number: "asc" }, { revision: "desc" }] },
+      },
     });
     res.json(projects);
   })
@@ -46,7 +50,10 @@ projectsRouter.get(
   ah(async (req, res) => {
     const project = await prisma.project.findUnique({
       where: { id: req.params.id },
-      include: { _count: { select: { specItems: true, offers: true, deliveries: true, acts: true, deviations: true } } },
+      include: {
+        _count: { select: { specItems: true, offers: true, deliveries: true, acts: true, deviations: true } },
+        requests: { select: { id: true, number: true, revision: true }, orderBy: [{ number: "asc" }, { revision: "desc" }] },
+      },
     });
     if (!project) throw new HttpError(404, "Объект не найден");
     res.json(project);
