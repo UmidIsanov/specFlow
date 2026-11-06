@@ -25,6 +25,9 @@ echo "== 3. База данных =="
 export DATABASE_URL="file:$ROOT/server/prisma/dev.db"
 npm run db:push --prefix server
 
+echo "== 3.1 Старые позиции — по заявкам =="
+npm run requests:init --prefix server
+
 echo "== 4. Сборка API и интерфейса =="
 npm run build --prefix server
 npm install --prefix web --no-audit --fund=false
