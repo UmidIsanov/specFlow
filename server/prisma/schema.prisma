@@ -26,6 +26,7 @@ model Project {
   members ProjectMember[]
   invites Invite[]
 
+  requests    Request[]
   specItems   SpecItem[]
   offers      Offer[]
   deliveries  Delivery[]
@@ -36,10 +37,32 @@ model Project {
   @@index([ownerId])
 }
 
+/// Заявка на закупку: номер, ревизия и позиции, которые по ней заказывают.
+/// Одна заявка обычно покрывает часть объекта — по проекту 100 компьютеров,
+/// в заявку попадают 50, поэтому заявок на объекте бывает несколько.
+model Request {
+  id        String   @id @default(cuid())
+  projectId String
+  number    String? // номер заявки: 6450, 8198
+  revision  Int      @default(1) // ревизия: новая не стирает предыдущую, встаёт рядом
+  title     String? // чем заявка отличается от соседних: «Лотки», «Кабель»
+  sourceFile String? // имя загруженного файла — откуда приехали позиции
+  createdAt DateTime @default(now())
+
+  project Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items   SpecItem[]
+
+  @@unique([projectId, number, revision])
+  @@index([projectId])
+}
+
 /// Позиция проектной спецификации (то, что приходит из pdf-spec-converter)
 model SpecItem {
   id           String  @id @default(cuid())
   projectId    String
+  /// Заявка, по которой заказывают позицию. Необязателен, пока старые позиции
+  /// не разложены по заявкам скриптом `npm run requests:init`.
+  requestId    String?
   pos          String? // № по спецификации
   system       String  @default("ПС") // ПС | СКС | СОТ | АПТ | ПЕРИМЕТР | ...
   name         String
@@ -57,6 +80,7 @@ model SpecItem {
   docRef       String? // шифр документа проектного института
 
   project    Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  request    Request?       @relation(fields: [requestId], references: [id])
   offerItems OfferItem[]
   deliveries DeliveryItem[]
   actItems   WorkActItem[]
@@ -64,6 +88,7 @@ model SpecItem {
   deviations Deviation[]
 
   @@index([projectId])
+  @@index([requestId])
 }
 
 model Supplier {
