@@ -173,6 +173,7 @@ export const requireProjectOf =
 export const ownerOf = {
   offer: (id: string) => prisma.offer.findUnique({ where: { id }, select: { projectId: true } }),
   specItem: (id: string) => prisma.specItem.findUnique({ where: { id }, select: { projectId: true } }),
+  request: (id: string) => prisma.request.findUnique({ where: { id }, select: { projectId: true } }),
   act: (id: string) => prisma.workAct.findUnique({ where: { id }, select: { projectId: true } }),
   delivery: (id: string) => prisma.delivery.findUnique({ where: { id }, select: { projectId: true } }),
   offerItem: (id: string) =>

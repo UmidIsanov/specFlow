@@ -32,14 +32,52 @@ const rowSchema = z.object({
 specRouter.get(
   "/projects/:projectId/spec",
   ah(async (req, res) => {
+    // Без requestId отдаём все позиции объекта: так работают сводные экраны
+    // (план-факт, склад, сверка КП), которым заявки неинтересны.
+    const requestId = typeof req.query.requestId === "string" ? req.query.requestId : undefined;
     res.json(
       await prisma.specItem.findMany({
-        where: { projectId: req.params.projectId },
+        where: { projectId: req.params.projectId, ...(requestId ? { requestId } : {}) },
         orderBy: [{ system: "asc" }, { pos: "asc" }],
       })
     );
   })
 );
+
+/**
+ * Куда класть загружаемые позиции: в выбранную заявку или в новую.
+ * Повторная загрузка того же номера и ревизии дополняет заявку, а не плодит двойники.
+ */
+async function resolveRequest(
+  projectId: string,
+  body: Record<string, unknown>,
+  sourceFile?: string
+): Promise<string> {
+  const requestId = typeof body.requestId === "string" && body.requestId ? body.requestId : undefined;
+  if (requestId) {
+    const found = await prisma.request.findUnique({
+      where: { id: requestId },
+      select: { id: true, projectId: true },
+    });
+    if (!found || found.projectId !== projectId) throw new HttpError(404, "Заявка не найдена");
+    if (sourceFile) await prisma.request.update({ where: { id: found.id }, data: { sourceFile } });
+    return found.id;
+  }
+
+  const number = typeof body.number === "string" && body.number.trim() ? body.number.trim() : null;
+  const revision = Number(body.revision) >= 1 ? Math.floor(Number(body.revision)) : 1;
+  const title = typeof body.title === "string" && body.title.trim() ? body.title.trim() : null;
+
+  const existing = await prisma.request.findFirst({ where: { projectId, number, revision } });
+  if (existing) {
+    if (sourceFile) await prisma.request.update({ where: { id: existing.id }, data: { sourceFile } });
+    return existing.id;
+  }
+  const created = await prisma.request.create({
+    data: { projectId, number, revision, title, sourceFile: sourceFile ?? null },
+  });
+  return created.id;
+}
 
 /** Пакетная загрузка заявки (в т.ч. из JSON, который отдаёт pdf-spec-converter). */
 specRouter.post(
@@ -50,9 +88,11 @@ specRouter.post(
       .parse(req.body);
     const projectId = req.params.projectId;
 
-    if (replace) await prisma.specItem.deleteMany({ where: { projectId } });
-    await prisma.specItem.createMany({ data: items.map((i) => ({ ...i, projectId })) });
-    res.status(201).json({ created: items.length });
+    const requestId = await resolveRequest(projectId, req.body as Record<string, unknown>);
+    // Замена чистит только эту заявку: соседние заявки объекта трогать нельзя.
+    if (replace) await prisma.specItem.deleteMany({ where: { projectId, requestId } });
+    await prisma.specItem.createMany({ data: items.map((i) => ({ ...i, projectId, requestId })) });
+    res.status(201).json({ created: items.length, requestId });
   })
 );
 
@@ -85,11 +125,13 @@ specRouter.post(
     }
 
     const projectId = req.params.projectId;
-    if (req.body.replace === "true") await prisma.specItem.deleteMany({ where: { projectId } });
+    const requestId = await resolveRequest(projectId, req.body, originalName(req.file));
+    if (req.body.replace === "true") await prisma.specItem.deleteMany({ where: { projectId, requestId } });
 
     await prisma.specItem.createMany({
       data: parsed.rows.map((r) => ({
         projectId,
+        requestId,
         // система берётся из файла, а выбор в форме нужен лишь когда колонки «Система» нет
         system: r.system ?? fallbackSystem,
         pos: r.pos,
@@ -109,6 +151,7 @@ specRouter.post(
 
     res.status(201).json({
       created: parsed.rows.length,
+      requestId,
       sheet: parsed.sheet,
       sheets: parsed.sheets,
       columns: Object.keys(parsed.columns),
@@ -208,10 +251,12 @@ specRouter.post(
       }
 
       report({ stage: "Сохраняю позиции в базу", done: 1, total: 1 });
-      if (replace) await prisma.specItem.deleteMany({ where: { projectId } });
+      const requestId = await resolveRequest(projectId, req.body, originalname);
+      if (replace) await prisma.specItem.deleteMany({ where: { projectId, requestId } });
       await prisma.specItem.createMany({
         data: rows.map((r) => ({
           projectId,
+          requestId,
           system: r.system ?? fallbackSystem,
           pos: r.pos,
           name: r.name,
@@ -232,6 +277,7 @@ specRouter.post(
 
       return {
         created: rows.length,
+        requestId,
         source,
         pages,
         warnings,
