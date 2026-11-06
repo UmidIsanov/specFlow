@@ -9,6 +9,7 @@ import { convertPdf, converterStatus } from "../lib/converter.js";
 import { firstPageText, localOcrAvailable, recognizeLocally } from "../lib/localOcr.js";
 import { classifyRows, classifyText } from "../lib/docKind.js";
 import { createJob, getJob, runJob } from "../lib/jobs.js";
+import { detectRequestNumber } from "../lib/requestNumber.js";
 
 export const specRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
@@ -51,7 +52,8 @@ specRouter.get(
 async function resolveRequest(
   projectId: string,
   body: Record<string, unknown>,
-  sourceFile?: string
+  sourceFile?: string,
+  heading?: string
 ): Promise<string> {
   const requestId = typeof body.requestId === "string" && body.requestId ? body.requestId : undefined;
   if (requestId) {
@@ -64,8 +66,12 @@ async function resolveRequest(
     return found.id;
   }
 
-  const number = typeof body.number === "string" && body.number.trim() ? body.number.trim() : null;
-  const revision = Number(body.revision) >= 1 ? Math.floor(Number(body.revision)) : 1;
+  // Номер не указали руками — ищем его там, где он уже написан: в имени файла и шапке.
+  const guessed = detectRequestNumber(sourceFile, heading);
+  const typed = typeof body.number === "string" && body.number.trim() ? body.number.trim() : null;
+  const number = typed ?? guessed.number ?? null;
+  const revision =
+    Number(body.revision) >= 1 ? Math.floor(Number(body.revision)) : (typed ? 1 : guessed.revision ?? 1);
   const title = typeof body.title === "string" && body.title.trim() ? body.title.trim() : null;
 
   const existing = await prisma.request.findFirst({ where: { projectId, number, revision } });
@@ -125,7 +131,7 @@ specRouter.post(
     }
 
     const projectId = req.params.projectId;
-    const requestId = await resolveRequest(projectId, req.body, originalName(req.file));
+    const requestId = await resolveRequest(projectId, req.body, originalName(req.file), parsed.heading);
     if (req.body.replace === "true") await prisma.specItem.deleteMany({ where: { projectId, requestId } });
 
     await prisma.specItem.createMany({
@@ -251,7 +257,7 @@ specRouter.post(
       }
 
       report({ stage: "Сохраняю позиции в базу", done: 1, total: 1 });
-      const requestId = await resolveRequest(projectId, req.body, originalname);
+      const requestId = await resolveRequest(projectId, req.body, originalname, head);
       if (replace) await prisma.specItem.deleteMany({ where: { projectId, requestId } });
       await prisma.specItem.createMany({
         data: rows.map((r) => ({

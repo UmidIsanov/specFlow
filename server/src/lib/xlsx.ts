@@ -24,6 +24,8 @@ export type SheetParse = {
   headerRow: number;
   columns: Partial<Record<keyof RawRow, number>>;
   rows: RawRow[];
+  /// Строки выше шапки таблицы: там стоят номер заявки, объект и дата.
+  heading: string;
 };
 
 // Порядок важен: колонку забирает первое подходящее поле.
@@ -127,6 +129,17 @@ function extractRows(grid: Grid, headerRow: number, columns: Partial<Record<keyo
   return rows;
 }
 
+/** Всё, что написано над таблицей: обычно «Заявка № 6450, ревизия 2» и объект. */
+function readHeading(grid: Grid, headerRow: number): string {
+  return grid
+    .slice(0, Math.max(headerRow, 0))
+    .flat()
+    .map((c) => String(c ?? "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 600);
+}
+
 function parseSheet(wb: XLSX.WorkBook, name: string): Omit<SheetParse, "sheets"> | null {
   const sheet = wb.Sheets[name];
   if (!sheet) return null;
@@ -134,7 +147,13 @@ function parseSheet(wb: XLSX.WorkBook, name: string): Omit<SheetParse, "sheets">
   const detected = detectHeader(grid);
   if (!detected) return null;
   const rows = extractRows(grid, detected.headerRow, detected.columns);
-  return { sheet: name, headerRow: detected.headerRow, columns: detected.columns, rows };
+  return {
+    sheet: name,
+    headerRow: detected.headerRow,
+    columns: detected.columns,
+    rows,
+    heading: readHeading(grid, detected.headerRow),
+  };
 }
 
 /** Насколько лист похож на полную спецификацию: и объём строк, и богатство колонок. */
@@ -153,7 +172,7 @@ export function parseSpecWorkbook(buf: Buffer, sheetName?: string): SheetParse {
 
   if (sheetName) {
     const parsed = parseSheet(wb, sheetName);
-    if (!parsed) return { sheet: sheetName, sheets, headerRow: -1, columns: {}, rows: [] };
+    if (!parsed) return { sheet: sheetName, sheets, headerRow: -1, columns: {}, rows: [], heading: "" };
     return { ...parsed, sheets };
   }
 
@@ -162,7 +181,7 @@ export function parseSpecWorkbook(buf: Buffer, sheetName?: string): SheetParse {
     const parsed = parseSheet(wb, name);
     if (parsed && parsed.rows.length && (!best || score(parsed) > score(best))) best = parsed;
   }
-  if (!best) return { sheet: sheets[0] ?? "", sheets, headerRow: -1, columns: {}, rows: [] };
+  if (!best) return { sheet: sheets[0] ?? "", sheets, headerRow: -1, columns: {}, rows: [], heading: "" };
   return { ...best, sheets };
 }
 
