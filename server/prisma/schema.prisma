@@ -33,6 +33,8 @@ model Project {
   acts        WorkAct[]
   stockMoves  StockMove[]
   deviations  Deviation[]
+  itdScopes   ItdScope[]
+  itdRecords  ItdRecord[]
 
   @@index([ownerId])
 }
@@ -207,6 +209,66 @@ model WorkActItem {
   specItem SpecItem @relation(fields: [specItemId], references: [id])
 
   @@index([actId])
+}
+
+/// Участок исполнительной: пара «объект + система + вид работы».
+///
+/// ИТД — отдельный контур: ни с заявкой, ни с КП он не связан. Кабель и гофра
+/// идут по другим заявкам, и сопоставлять сданные работы с закупкой нельзя.
+/// У участка два разных состояния: «физика принята» (заказчик принял сами
+/// работы, чтобы стройка не стояла) и «пакет документов сдан» — остальные
+/// 5–6 документов: входной контроль, сертификаты, трасса по проекту.
+model ItdScope {
+  id        String @id @default(cuid())
+  projectId String
+  building  String // № объекта из реестра: 401100
+  system    String // система: AFS, ACS, LAN…
+  workKind  String // вид работы: «Прокладка кабеля», «Лоток»
+  workPack  String // пакет работ: CABLE | EQUIP | OTHER (см. lib/enums.ts)
+
+  /// Состояние приёмки работ, посчитано по строкам реестра:
+  /// ACCEPTED | PARTIAL | REMARKS | REQUESTED
+  state      String    @default("REQUESTED")
+  acceptedAt DateTime? // дата инспекции, которой приняли работы
+
+  /// Пакет документов сдан — это ставит ПТО руками, в реестре инспекций такого нет.
+  dossierDone Boolean   @default(false)
+  dossierAt   DateTime?
+  dossierNote String?
+
+  project Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  records ItdRecord[]
+
+  @@unique([projectId, building, system, workKind])
+  @@index([projectId])
+}
+
+/// Строка реестра инспекций («Инспекция»): одна заявка на инспекцию.
+/// Реестр клиент обновляет целиком раз в неделю, поэтому загрузка заменяет
+/// все строки объекта, а отметки ПТО живут на участке и не стираются.
+model ItdRecord {
+  id        String @id @default(cuid())
+  projectId String
+  scopeId   String
+
+  rowNo         String? // № в реестре
+  fcn           String? // изменение проекта: «FCN № 530»
+  statusText    String? // статус как написано в файле: «Сдано. 3 -этаж частично»
+  state         String // ACCEPTED | PARTIAL | REMARKS | REQUESTED
+  inspectionNo  String? // RFI-PRJ-QAC-INS-59653
+  inspectedAt   DateTime?
+  inspectedText String? // когда в клетке не дата, а заметка: «(13.05.2026) 18.05.2026»
+  smrDoneAt     DateTime? // дата завершения СМР
+  rawKind       String? // вид работы ровно как в файле, до приведения к общему виду
+
+  sourceFile String?
+  importedAt DateTime @default(now())
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scope   ItdScope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([scopeId])
 }
 
 /// Движение ТМЦ по складу объекта
