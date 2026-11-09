@@ -10,7 +10,7 @@ const TABS = [
   { href: "/offers", label: "Анализ КП" },
   { href: "/audit", label: "Сверка с заявкой" },
   { href: "/supply", label: "Поставки и склад" },
-  { href: "/acts", label: "Акты и ИТД" },
+  { href: "/acts", label: "ИТД" },
 ];
 
 export default function ProjectTabs({ projectId }: { projectId: string }) {

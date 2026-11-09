@@ -271,3 +271,51 @@ export type Deviation = {
   date: string;
   specItem: SpecItem | null;
 };
+
+export type ItdState = "ACCEPTED" | "PARTIAL" | "REMARKS" | "REQUESTED";
+export type ItdPack = "EQUIP" | "CABLE" | "OTHER";
+
+export type ItdRecord = {
+  id: string;
+  rowNo: string | null;
+  fcn: string | null;
+  statusText: string | null;
+  state: ItdState;
+  inspectionNo: string | null;
+  inspectedAt: string | null;
+  inspectedText: string | null;
+  smrDoneAt: string | null;
+  rawKind: string | null;
+};
+
+/** Участок исполнительной: «объект + система + вид работы». */
+export type ItdScope = {
+  id: string;
+  building: string;
+  system: string;
+  workKind: string;
+  workPack: ItdPack;
+  state: ItdState;
+  acceptedAt: string | null;
+  dossierDone: boolean;
+  dossierAt: string | null;
+  dossierNote: string | null;
+  records: ItdRecord[];
+};
+
+export type ItdSummary = {
+  system: string;
+  scopes: number;
+  accepted: number;
+  partial: number;
+  remarks: number;
+  requested: number;
+  dossierDone: number;
+};
+
+export type ItdView = {
+  scopes: ItdScope[];
+  systems: ItdSummary[];
+  total: ItdSummary;
+  registry: { sourceFile: string | null; importedAt: string; rows: number } | null;
+};

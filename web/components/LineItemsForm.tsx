@@ -10,7 +10,7 @@ import { nf } from "@/lib/format";
 
 type Mode = "delivery" | "act";
 
-/** Общая форма для прихода на склад и для акта установки: поиск по заявке + количества. */
+/** Общая форма для прихода на склад и для документа ИТД: поиск по заявке + количества. */
 export default function LineItemsForm({
   mode,
   projectId,
@@ -78,7 +78,7 @@ export default function LineItemsForm({
         onClick={() => setOpen(true)}
         className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600"
       >
-        {mode === "delivery" ? "+ Приход на склад" : "+ Акт установки"}
+        {mode === "delivery" ? "+ Приход на склад" : "+ Документ ИТД"}
       </button>
     );
   }
@@ -86,7 +86,7 @@ export default function LineItemsForm({
   return (
     <div className="rounded-xl border border-ink-200 bg-white p-4">
       <div className="flex items-center justify-between">
-        <div className="font-medium">{mode === "delivery" ? "Новая поставка" : "Новый акт установки"}</div>
+        <div className="font-medium">{mode === "delivery" ? "Новая поставка" : "Новый документ ИТД"}</div>
         <button onClick={() => setOpen(false)} className="text-sm text-ink-400 hover:text-ink-900">
           закрыть
         </button>

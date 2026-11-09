@@ -9,6 +9,10 @@ type Field = { name: string; label: string; options?: { value: string; label: st
 
 type Result = {
   created?: number;
+  /** Реестр инспекций: строк прочитано и во сколько участков они сложились. */
+  rows?: number;
+  scopes?: number;
+  skipped?: number;
   sheet?: string;
   pages?: number;
   columns?: unknown[];
@@ -357,7 +361,13 @@ export default function UploadForm({
 
       {result ? (
         <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          {typeof result.created === "number" ? (
+          {typeof result.rows === "number" ? (
+            <>
+              Прочитано строк: <b>{result.rows}</b> · участков: <b>{result.scopes}</b>
+              {result.sheet ? ` · лист «${result.sheet}»` : ""}
+              {result.skipped ? ` · пропущено строк без объекта: ${result.skipped}` : ""}
+            </>
+          ) : typeof result.created === "number" ? (
             <>
               Загружено строк: <b>{result.created}</b>
               {result.sheet ? ` · лист «${result.sheet}»` : ""}
