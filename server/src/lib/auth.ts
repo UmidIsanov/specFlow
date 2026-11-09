@@ -175,6 +175,7 @@ export const ownerOf = {
   specItem: (id: string) => prisma.specItem.findUnique({ where: { id }, select: { projectId: true } }),
   request: (id: string) => prisma.request.findUnique({ where: { id }, select: { projectId: true } }),
   act: (id: string) => prisma.workAct.findUnique({ where: { id }, select: { projectId: true } }),
+  itdScope: (id: string) => prisma.itdScope.findUnique({ where: { id }, select: { projectId: true } }),
   delivery: (id: string) => prisma.delivery.findUnique({ where: { id }, select: { projectId: true } }),
   offerItem: (id: string) =>
     prisma.offerItem

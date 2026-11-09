@@ -7,6 +7,7 @@ import { specRouter } from "./routes/spec.js";
 import { requestsRouter } from "./routes/requests.js";
 import { offersRouter } from "./routes/offers.js";
 import { supplyRouter } from "./routes/supply.js";
+import { itdRouter } from "./routes/itd.js";
 import { auditRouter } from "./routes/audit.js";
 import { exportRouter } from "./routes/export.js";
 import { authRouter } from "./routes/auth.js";
@@ -38,6 +39,7 @@ app.use("/api/offer-items/:id", requireProjectOf(ownerOf.offerItem));
 app.use("/api/spec-items/:id", requireProjectOf(ownerOf.specItem));
 app.use("/api/requests/:id", requireProjectOf(ownerOf.request));
 app.use("/api/acts/:id", requireProjectOf(ownerOf.act));
+app.use("/api/itd-scopes/:id", requireProjectOf(ownerOf.itdScope));
 app.use("/api/deliveries/:id", requireProjectOf(ownerOf.delivery));
 
 app.use("/api/projects", projectsRouter);
@@ -47,6 +49,7 @@ app.use("/api", requestsRouter);
 app.use("/api", specRouter);
 app.use("/api", offersRouter);
 app.use("/api", supplyRouter);
+app.use("/api", itdRouter);
 app.use("/api", auditRouter);
 app.use("/api", exportRouter);
 
