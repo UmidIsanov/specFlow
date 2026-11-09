@@ -50,7 +50,7 @@ export default async function Home() {
                   ["Позиций", p._count?.specItems ?? 0],
                   ["КП", p._count?.offers ?? 0],
                   ["Поставок", p._count?.deliveries ?? 0],
-                  ["Актов", p._count?.acts ?? 0],
+                  ["ИТД", p._count?.acts ?? 0],
                 ].map(([label, value]) => (
                   <div key={String(label)} className="rounded-lg bg-ink-50 py-2">
                     <dt className="text-[11px] text-ink-400">{label}</dt>

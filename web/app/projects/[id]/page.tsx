@@ -116,11 +116,11 @@ export default async function ProjectDashboard({ params }: { params: Promise<{ i
 
         <Card className="p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold">Последние акты</h2>
-            <LinkButton href={`/projects/${id}/acts`}>Все акты</LinkButton>
+            <h2 className="font-semibold">Последние документы ИТД</h2>
+            <LinkButton href={`/projects/${id}/acts`}>Весь ИТД</LinkButton>
           </div>
           {acts.length === 0 ? (
-            <p className="text-sm text-ink-400">Актов пока нет.</p>
+            <p className="text-sm text-ink-400">Документов ИТД пока нет.</p>
           ) : (
             <ul className="divide-y divide-ink-100">
               {acts.slice(0, 6).map((a) => (
