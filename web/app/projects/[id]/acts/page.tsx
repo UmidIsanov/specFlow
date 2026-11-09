@@ -6,6 +6,7 @@ import LineItemsForm from "@/components/LineItemsForm";
 import SignActButton from "@/components/SignActButton";
 import DeviationForm from "@/components/DeviationForm";
 import UploadForm from "@/components/UploadForm";
+import ExportButton from "@/components/ExportButton";
 import ItdScopes from "@/components/ItdScopes";
 import { Abbr, AbbrText } from "@/components/Abbr";
 import { acceptedShare, dossierShare } from "@/lib/itd";
@@ -120,6 +121,13 @@ export default async function ActsPage({ params }: { params: Promise<{ id: strin
           hint="Файл «Инспекция», который ведёт ПТО. Он обновляется целиком, поэтому прошлые строки заменяются, а отметки о сданных пакетах документов остаются."
           submitLabel="Загрузить реестр"
         />
+
+        {itd.scopes.length ? (
+          <div className="flex flex-wrap items-center gap-2 text-sm text-ink-600">
+            <ExportButton path={`/projects/${id}/export/itd.xlsx`} label="Папка ИТД в Excel" />
+            <span className="text-ink-400">участки, сводка по системам и строки реестра — без склада и закупок</span>
+          </div>
+        ) : null}
 
         <ItdScopes scopes={itd.scopes} />
       </section>

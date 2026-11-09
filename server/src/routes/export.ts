@@ -262,3 +262,102 @@ exportRouter.get(
     sendWorkbook(res, wb, `План-факт — ${project.name}.xlsx`);
   })
 );
+
+/* ------------------------------------ ИТД ------------------------------------ */
+
+const ITD_STATE_LABEL: Record<string, string> = {
+  ACCEPTED: "Работы приняты",
+  PARTIAL: "Принято частично",
+  REMARKS: "Устраняют замечания",
+  REQUESTED: "Инспекция запрошена",
+};
+
+const ITD_PACK_LABEL: Record<string, string> = {
+  EQUIP: "Оборудование",
+  CABLE: "Кабель и трассы",
+  OTHER: "Прочее",
+};
+
+/**
+ * Папка ИТД для ПТО: только сдача работ заказчику — ни склада, ни закупок.
+ * Три листа: участки, сводка по системам и строки реестра инспекций, чтобы
+ * свод можно было положить рядом с самими инспекциями.
+ */
+exportRouter.get(
+  "/projects/:projectId/export/itd.xlsx",
+  ah(async (req, res) => {
+    const project = await prisma.project.findUnique({ where: { id: req.params.projectId } });
+    if (!project) throw new HttpError(404, "Объект не найден");
+
+    const scopes = await prisma.itdScope.findMany({
+      where: { projectId: project.id },
+      include: { records: { orderBy: { inspectedAt: "desc" } } },
+      orderBy: [{ system: "asc" }, { building: "asc" }, { workKind: "asc" }],
+    });
+
+    const wb = XLSX.utils.book_new();
+
+    addSheet(
+      wb,
+      "Участки",
+      scopes.map((s) => ({
+        Объект: s.building,
+        Система: s.system,
+        "Вид работы": s.workKind,
+        "Пакет работ": ITD_PACK_LABEL[s.workPack] ?? s.workPack,
+        "Приёмка работ": ITD_STATE_LABEL[s.state] ?? s.state,
+        "Дата инспекции": s.acceptedAt ? s.acceptedAt.toLocaleDateString("ru-RU") : "",
+        "Пакет документов": s.dossierDone ? "сдан" : "не сдан",
+        "Пакет сдан": s.dossierAt ? s.dossierAt.toLocaleDateString("ru-RU") : "",
+        Примечание: s.dossierNote ?? "",
+        Инспекций: s.records.length,
+      }))
+    );
+
+    const bySystem = new Map<string, { scopes: number; accepted: number; partial: number; remarks: number; dossier: number }>();
+    for (const s of scopes) {
+      const row = bySystem.get(s.system) ?? { scopes: 0, accepted: 0, partial: 0, remarks: 0, dossier: 0 };
+      row.scopes++;
+      if (s.state === "ACCEPTED") row.accepted++;
+      if (s.state === "PARTIAL") row.partial++;
+      if (s.state === "REMARKS") row.remarks++;
+      if (s.dossierDone) row.dossier++;
+      bySystem.set(s.system, row);
+    }
+    addSheet(
+      wb,
+      "По системам",
+      [...bySystem.entries()].map(([system, r]) => ({
+        Система: system,
+        Участков: r.scopes,
+        "Работы приняты": r.accepted,
+        "Принято частично": r.partial,
+        "Устраняют замечания": r.remarks,
+        "Пакетов сдано": r.dossier,
+        "Принято, %": Math.round(((r.accepted + r.partial * 0.5) / r.scopes) * 100),
+        "Пакетов сдано, %": Math.round((r.dossier / r.scopes) * 100),
+      }))
+    );
+
+    addSheet(
+      wb,
+      "Реестр инспекций",
+      scopes.flatMap((s) =>
+        s.records.map((r) => ({
+          "№ в реестре": r.rowNo ?? "",
+          Объект: s.building,
+          Система: s.system,
+          "Вид работы": s.workKind,
+          "Изменение проекта": r.fcn ?? "",
+          Статус: r.statusText ?? "",
+          "Номер инспекции": r.inspectionNo ?? "",
+          "Дата инспекции": r.inspectedAt ? r.inspectedAt.toLocaleDateString("ru-RU") : r.inspectedText ?? "",
+          "Завершение СМР": r.smrDoneAt ? r.smrDoneAt.toLocaleDateString("ru-RU") : "",
+          "Из файла": r.sourceFile ?? "",
+        }))
+      )
+    );
+
+    sendWorkbook(res, wb, `Папка ИТД — ${project.name}.xlsx`);
+  })
+);
